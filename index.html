@@ -639,11 +639,13 @@ function aiStatus(extra) {
   if (extra) setMsg(extra[0], extra[1]);
   else setMsg(mine && game.inCheck() ? 'Achtung, Schach! Rette deinen König.' : '', mine && game.inCheck() ? 'bad' : '');
 }
+const EP_TEXT = '✨ En passant! Der Bauer hat „im Vorbeigehen“ geschlagen. Das ist erlaubt: Zieht ein Bauer zwei Felder und landet neben einem gegnerischen Bauern, darf dieser ihn sofort schräg schlagen, als wäre er nur ein Feld gezogen.';
+const EP_SAY = 'En passant! Schlagen im Vorbeigehen. Das ist eine besondere Bauernregel.';
 function aiPlayerMove(mv) {
   const res = game.move({ from: mv.from, to: mv.to, promotion: 'q' });
   sel = null; hint = null; lastMove = [res.from, res.to]; renderBoard(); saveAI();
   if (game.isGameOver()) { aiStatus(); return }
-  aiStatus(res.captured ? ['Du hast ' + DEN[res.captured] + ' geschlagen! 👍', 'good'] : null);
+  aiStatus(res.flags.includes('e') ? [EP_TEXT, 'good'] : res.captured ? ['Du hast ' + DEN[res.captured] + ' geschlagen! 👍', 'good'] : null);
   aiThink();
 }
 function aiThink() {
@@ -653,7 +655,8 @@ function aiThink() {
     const san = bestMove(game.fen(), aiLvlCur);
     if (mode !== 'ai' || !san) { busy = false; return }
     const r = game.move(san); lastMove = [r.from, r.to]; busy = false; renderBoard(); saveAI();
-    if (r.captured) { aiStatus(['Der Computer hat ' + DEN[r.captured] + ' geschlagen.', 'bad']); if (game.inCheck()) setMsg('Schach! Und der Computer hat ' + DEN[r.captured] + ' geschlagen.', 'bad') }
+    if (r.flags.includes('e')) { aiStatus([EP_TEXT, '']); say(EP_SAY) }
+    else if (r.captured) { aiStatus(['Der Computer hat ' + DEN[r.captured] + ' geschlagen.', 'bad']); if (game.inCheck()) setMsg('Schach! Und der Computer hat ' + DEN[r.captured] + ' geschlagen.', 'bad') }
     else aiStatus();
     if (game.inCheck() && !game.isGameOver()) say('Schach!');
   }, 350);
@@ -727,11 +730,13 @@ function friendStatus(extra) {
 }
 
 function friendMove(mv, mine) {
-  const res = game.move({ from: mv.from, to: mv.to, promotion: mv.promotion || 'q' });
+  // eigener Zug: Bauer wird immer zur Dame (früher kam hier manchmal ein Springer heraus)
+  const res = game.move({ from: mv.from, to: mv.to, promotion: mine ? 'q' : (mv.promotion || 'q') });
   if (!res) return;
   sel = null; lastMove = [res.from, res.to]; renderBoard();
   if (mode === 'online' && mine && conn && conn.open) conn.send({ t: 'move', from: res.from, to: res.to, promotion: res.promotion, ply: game.history().length });
   if (game.inCheck() && !game.isGameOver()) say('Schach!');
+  if (res.flags.includes('e')) { friendStatus([EP_TEXT, '']); say(EP_SAY); return }
   friendStatus(res.captured && !game.inCheck() ? [`${FARBE[res.color]} hat ${DEN[res.captured]} geschlagen.`, ''] : null);
 }
 $('fUndo').onclick = () => { if (mode !== 'local' || !game.history().length) return; game.undo(); over = false; const h = game.history({ verbose: true }); lastMove = h.length ? [h[h.length - 1].from, h[h.length - 1].to] : null; sel = null; renderBoard(); friendStatus(['Zug zurückgenommen.', '']) };
