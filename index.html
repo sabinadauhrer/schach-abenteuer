@@ -92,6 +92,19 @@ header h1{flex:1;margin:0;font-size:24px}
 @keyframes pop{from{transform:scale(.7);opacity:0}}
 .foot{margin-top:28px;color:var(--muted);font-size:13px;text-align:center}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.arrow{position:absolute;inset:0;pointer-events:none;z-index:3}
+.ghost{position:fixed;z-index:30;pointer-events:none;transform:translate(-50%,-60%) scale(1.25);font-family:var(--piece-font);line-height:1}
+.ghost.w{color:#fff;-webkit-text-stroke:1.4px #1D2B53;paint-order:stroke fill}
+.ghost.b{color:#1D2B53}
+.sq.from .p{opacity:.35}
+.sq.hint2::after{content:"";position:absolute;inset:3px;border:4px dashed var(--hint);border-radius:50%;pointer-events:none;animation:pulse 1s infinite alternate}
+.kap.ai{background:linear-gradient(135deg,#FFF6D8,#fff);border:3px solid var(--sun)}
+.setup{background:var(--paper);border-radius:22px;padding:16px;box-shadow:0 4px 0 var(--line);margin-bottom:14px}
+.setup h3{margin:0 0 10px;font-size:18px}
+.seg{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.seg button{flex:1;min-width:90px;height:54px;border-radius:18px;background:var(--bg);font-weight:700;font-size:17px;border:3px solid transparent}
+.seg button[aria-pressed="true"]{border-color:var(--good);background:#E3F5EA}
+.moves{font-size:14px;color:var(--muted);text-align:center;min-height:1.4em;margin-top:6px;word-break:break-word}
 </style>
 </head>
 <body>
@@ -99,8 +112,10 @@ header h1{flex:1;margin:0;font-size:24px}
   <!-- Startseite -->
   <div id="vHome">
     <header><h1>Schach-Abenteuer</h1><span class="stars" id="starsHome">0</span></header>
-    <div class="hero"><div class="big">♞︎♛︎♚︎</div><p>Löse berühmte Schach-Rätsel aus Büchern und alten Partien!</p></div>
+    <div class="hero"><div class="big">♞︎♛︎♚︎</div><p>Löse berühmte Schach-Rätsel aus Büchern und großen Partien – oder spiel gegen den Computer!</p></div>
+    <button class="kap ai" id="goAI"><span class="ic">🤖</span><span><b>Gegen den Computer</b><small>Eine ganze Partie spielen</small></span></button>
     <div id="kapList"></div>
+    <div class="tools"><button class="btn" id="voiceBtn" hidden>🗣️ Stimme</button></div>
     <div class="foot">Schachregeln: chess.js (BSD-Lizenz)</div>
   </div>
   <!-- Kapitel -->
@@ -108,7 +123,19 @@ header h1{flex:1;margin:0;font-size:24px}
     <header><button class="back" id="kapBack" aria-label="Zurück">‹</button><h1 id="kapTitle"></h1><span class="stars" id="starsKap">0</span></header>
     <div class="list" id="itemList"></div>
   </div>
-  <!-- Aufgabe -->
+  <!-- Computer-Partie einrichten -->
+  <div id="vSetup" hidden>
+    <header><button class="back" id="setupBack" aria-label="Zurück">‹</button><h1>Gegen den Computer</h1></header>
+    <div class="setup">
+      <h3>Wie stark soll der Computer sein?</h3>
+      <div class="seg" id="segLevel"><button data-v="1">🐣 Leicht</button><button data-v="2">🦊 Mittel</button><button data-v="3">🦁 Stark</button></div>
+      <h3>Welche Farbe willst du?</h3>
+      <div class="seg" id="segColor"><button data-v="w">♔︎ Weiß</button><button data-v="b">♚︎ Schwarz</button><button data-v="r">🎲 Zufall</button></div>
+      <button class="btn main" id="aiStart" style="width:100%">Los geht's! ›</button>
+    </div>
+    <button class="btn" id="aiResume" hidden style="width:100%">↩︎ Letzte Partie weiterspielen</button>
+  </div>
+  <!-- Brett (Rätsel und Computer-Partie) -->
   <div id="vPlay" hidden>
     <header><button class="back" id="playBack" aria-label="Zurück">‹</button><h1 id="playNum"></h1><span class="stars" id="starsPlay">0</span></header>
     <div class="task">
@@ -117,12 +144,17 @@ header h1{flex:1;margin:0;font-size:24px}
     </div>
     <div class="board" id="board" role="grid" aria-label="Schachbrett"></div>
     <div class="msg" id="msg" aria-live="polite"></div>
-    <div class="tools">
+    <div class="tools" id="puzzleTools">
       <button class="btn" id="bSpeak">🔊 Vorlesen</button>
       <button class="btn" id="bHint">💡 Tipp</button>
-      <button class="btn" id="bSolve" hidden>👀 Lösung zeigen</button>
       <button class="btn" id="bReset">↺ Neu</button>
     </div>
+    <div class="tools" id="aiTools" hidden>
+      <button class="btn" id="aUndo">↶ Zug zurück</button>
+      <button class="btn" id="aHint">💡 Tipp</button>
+      <button class="btn" id="aNew">↺ Neue Partie</button>
+    </div>
+    <div class="moves" id="moveList"></div>
   </div>
 </div>
 <div class="win" id="win" hidden>
@@ -137,41 +169,54 @@ header h1{flex:1;margin:0;font-size:24px}
 <script type="module">
 import { Chess } from './vendor/chess.js';
 import { KAPITEL, AUFGABEN } from './puzzles.js';
+import { bestMove } from './engine.js';
 
 const $ = id => document.getElementById(id);
 const store = {
   get(k, d) { try { const v = localStorage.getItem('schach.' + k); return v === null ? d : JSON.parse(v) } catch (e) { return d } },
   set(k, v) { try { localStorage.setItem('schach.' + k, JSON.stringify(v)) } catch (e) {} },
 };
-// Sterne pro Aufgabe (Index -> 1..3)
 let best = store.get('best', {});
 const total = () => Object.values(best).reduce((a, b) => a + b, 0);
 function showStars() { ['starsHome', 'starsKap', 'starsPlay'].forEach(id => $(id).textContent = total()) }
 
 // ---------- Vorlesen ----------
-let voice = null;
-function pickVoice() { const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.startsWith('de')); voice = vs.find(v => /Anna|Petra|Helena|Google/.test(v.name)) || vs[0] || null }
+let voice = null, voices = [];
+function pickVoice() {
+  voices = speechSynthesis.getVoices().filter(v => v.lang && v.lang.startsWith('de'));
+  const want = store.get('voice', null);
+  voice = voices.find(v => v.name === want) || voices.find(v => /Anna|Petra|Helena|Google/.test(v.name)) || voices[0] || null;
+  const b = $('voiceBtn'); if (b) { b.hidden = voices.length < 2; b.textContent = '🗣️ Stimme: ' + (voice ? voice.name.replace(/\s*\(.*\)/, '') : '–') }
+}
 if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice }
+function nextVoice() {
+  if (!voices.length) return;
+  const i = voices.indexOf(voice); voice = voices[(i + 1) % voices.length]; store.set('voice', voice.name); pickVoice();
+  say('Hallo! So klinge ich.');
+}
 function say(text) {
   if (!('speechSynthesis' in window)) return;
   try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'de-DE'; if (voice) u.voice = voice; u.rate = .95; speechSynthesis.speak(u) } catch (e) {}
 }
+function hush() { try { speechSynthesis.cancel() } catch (e) {} }
 
 // ---------- Figuren ----------
 const GLYPH = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' };
 const NAME = { k: 'König', q: 'Dame', r: 'Turm', b: 'Läufer', n: 'Springer', p: 'Bauer' };
+const DEN = { k: 'den König', q: 'die Dame', r: 'den Turm', b: 'den Läufer', n: 'den Springer', p: 'den Bauern' };
 const FILES = 'abcdefgh';
 const clean = s => s.replace(/[+#!?]/g, '');
 
 // ---------- Ansichten ----------
-function view(v) { ['vHome', 'vKap', 'vPlay'].forEach(id => $(id).hidden = id !== v); window.scrollTo(0, 0); showStars() }
+function view(v) { ['vHome', 'vKap', 'vSetup', 'vPlay'].forEach(id => $(id).hidden = id !== v); window.scrollTo(0, 0); showStars() }
 function kapItems(kid) { return AUFGABEN.map((a, i) => ({ a, i })).filter(x => x.a.k === kid) }
 function starHTML(n) { return '★'.repeat(n) + '<i>' + '★'.repeat(3 - n) + '</i>' }
 
 function renderHome() {
-  $('kapList').innerHTML = '';
+  mode = null; $('kapList').innerHTML = '';
   KAPITEL.forEach(k => {
     const items = kapItems(k.id), done = items.filter(x => best[x.i]).length;
+    if (!items.length) return;
     const b = document.createElement('button'); b.className = 'kap';
     b.innerHTML = `<span class="ic">${k.icon}</span><span><b>${k.name}</b><small>${items.length} Rätsel</small></span><span class="pr">${done} / ${items.length} ✓</span>`;
     b.onclick = () => openKap(k.id); $('kapList').appendChild(b);
@@ -180,7 +225,7 @@ function renderHome() {
 }
 let curKap = null;
 function openKap(kid) {
-  curKap = kid; const k = KAPITEL.find(x => x.id === kid);
+  mode = null; curKap = kid; const k = KAPITEL.find(x => x.id === kid);
   $('kapTitle').textContent = k.name; $('itemList').innerHTML = '';
   kapItems(kid).forEach(({ a, i }, n) => {
     const b = document.createElement('button'); b.className = 'item';
@@ -190,31 +235,13 @@ function openKap(kid) {
   view('vKap');
 }
 $('kapBack').onclick = renderHome;
-$('playBack').onclick = () => { speechSynthesis?.cancel?.(); openKap(curKap || AUFGABEN[cur].k) };
+$('setupBack').onclick = renderHome;
+$('playBack').onclick = () => { hush(); if (mode === 'ai') { saveAI(); openSetup() } else openKap(curKap || AUFGABEN[cur].k) };
 
-// ---------- Rätsel ----------
-let cur = 0, game, me, step, sel = null, busy = false, fails = 0, hints = 0, lastMove = null, solved = false, hintSq = null;
-function startPos(a) { const c = new Chess(); if (a.start) c.load(a.start); else a.vor.forEach(m => c.move(m)); return c }
-function lastOf(a) { if (a.start) return null; const c = new Chess(); let m; a.vor.forEach(x => m = c.move(x)); return m ? [m.from, m.to] : null }
-
-function openPuzzle(i) {
-  cur = i; curKap = AUFGABEN[i].k; const a = AUFGABEN[i];
-  game = startPos(a); me = game.turn(); step = 0; sel = null; busy = false; fails = 0; hints = 0; solved = false; hintSq = null;
-  lastMove = lastOf(a);
-  const n = kapItems(a.k).findIndex(x => x.i === i) + 1;
-  $('playNum').textContent = 'Rätsel ' + n + ' von ' + kapItems(a.k).length;
-  $('tTitle').textContent = a.titel; $('tText').textContent = a.text;
-  $('tDot').style.background = me === 'w' ? '#fff' : '#1D2B53';
-  setTurnText(); setMsg('', ''); $('bSolve').hidden = true; $('bHint').classList.remove('glow');
-  renderBoard(); view('vPlay');
-}
-function myMoves() { return Math.ceil(AUFGABEN[cur].loesung.length / 2) }
-function setTurnText() {
-  const a = AUFGABEN[cur], farbe = me === 'w' ? 'Weiß' : 'Schwarz', nr = step / 2 + 1, n = myMoves();
-  const ziel = a.ziel === 'matt' ? (n === 1 ? 'Setze matt in 1 Zug!' : `Setze matt in ${n} Zügen!`) : 'Gewinne eine Figur!';
-  $('tTurn').textContent = `Du spielst ${farbe}. ${ziel}` + (n > 1 ? ` (Zug ${Math.min(nr, n)} von ${n})` : '');
-}
-function setMsg(t, cls) { const m = $('msg'); m.textContent = t; m.className = 'msg ' + (cls || '') }
+// ---------- gemeinsamer Brett-Zustand ----------
+let mode = null;          // 'puzzle' | 'ai'
+let game, me, sel = null, busy = false, lastMove = null, over = false;
+let hint = null;          // {from, to, lvl}
 
 function renderBoard() {
   const B = $('board'); B.innerHTML = '';
@@ -229,26 +256,120 @@ function renderBoard() {
     if (lastMove && lastMove.includes(sq)) d.classList.add('last');
     if (sq === sel) d.classList.add('selp');
     if (sq === kingChk) d.classList.add('chk');
-    if (sq === hintSq) d.classList.add('hint');
+    if (hint && hint.lvl >= 1 && sq === hint.from) d.classList.add('hint');
+    if (hint && hint.lvl >= 2 && sq === hint.to) d.classList.add('hint2');
     const t = tg.find(m => m.to === sq); if (t) { d.classList.add('tgt'); if (t.captured) d.classList.add('cap') }
     if (r === 7) d.insertAdjacentHTML('beforeend', `<span class="co f">${FILES[file]}</span>`);
     if (f === 0) d.insertAdjacentHTML('beforeend', `<span class="co r">${rank}</span>`);
-    d.onclick = () => tap(sq, d);
+    d.onclick = e => { if (e.detail === 0) tap(sq) };   // Tastatur
     B.appendChild(d);
   }
+  if (hint && hint.lvl >= 2) drawArrow(hint.from, hint.to);
+}
+function sqCenter(sq) {
+  const flip = me === 'b', f = FILES.indexOf(sq[0]), r = +sq[1];
+  const x = flip ? 7 - f : f, y = flip ? r - 1 : 8 - r;
+  return [(x + .5) * 12.5, (y + .5) * 12.5];
+}
+function drawArrow(a, b) {
+  const [x1, y1] = sqCenter(a), [x2, y2] = sqCenter(b);
+  const len = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / len, uy = (y2 - y1) / len;
+  const ex = x2 - ux * 4, ey = y2 - uy * 4;
+  $('board').insertAdjacentHTML('beforeend', `<svg class="arrow" viewBox="0 0 100 100" aria-hidden="true">
+    <defs><marker id="ah" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto"><path d="M0,0 L4,2 L0,4 z" fill="#4C9BE8"/></marker></defs>
+    <line x1="${x1}" y1="${y1}" x2="${ex}" y2="${ey}" stroke="#4C9BE8" stroke-opacity=".85" stroke-width="2.6" stroke-linecap="round" marker-end="url(#ah)"/></svg>`);
 }
 function findKing(c) { for (const row of game.board()) for (const p of row) if (p && p.type === 'k' && p.color === c) return p.square; return null }
+function canPlay() { return !busy && !over && game.turn() === me }
 
-function tap(sq, el) {
-  if (busy || solved || game.turn() !== me) return;
+function tap(sq) {
+  if (!canPlay()) return;
   const p = game.get(sq);
   if (sel && sel !== sq) {
     const mv = game.moves({ square: sel, verbose: true }).find(m => m.to === sq);
-    if (mv) { tryMove(mv); return }
+    if (mv) { onMove(mv); return }
   }
   if (p && p.color === me) { sel = sel === sq ? null : sq; renderBoard(); return }
   if (sel) { sel = null; renderBoard() }
 }
+
+// ---------- Ziehen mit dem Finger ----------
+let drag = null;
+const sqAt = (x, y) => { const el = document.elementFromPoint(x, y); const s = el && el.closest('.sq'); return s && $('board').contains(s) ? s.dataset.sq : null };
+$('board').addEventListener('pointerdown', e => {
+  const sq = sqAt(e.clientX, e.clientY); if (!sq || !canPlay()) return;
+  const p = game.get(sq);
+  if (!(p && p.color === me)) { tap(sq); return }
+  const wasSel = sel === sq; sel = sq; renderBoard();
+  drag = { from: sq, x: e.clientX, y: e.clientY, moved: false, wasSel, ghost: null, id: e.pointerId };
+  try { $('board').setPointerCapture(e.pointerId) } catch (er) {}
+  e.preventDefault();
+});
+$('board').addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 8) return;
+  if (!drag.moved) {
+    drag.moved = true; const p = game.get(drag.from);
+    const g = document.createElement('div'); g.className = 'ghost ' + p.color; g.textContent = GLYPH[p.type] + '︎';
+    g.style.fontSize = ($('board').getBoundingClientRect().width / 8 * .8) + 'px'; document.body.appendChild(g); drag.ghost = g;
+    document.querySelector(`[data-sq="${drag.from}"]`)?.classList.add('from');
+  }
+  drag.ghost.style.left = e.clientX + 'px'; drag.ghost.style.top = e.clientY + 'px';
+});
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag; drag = null; d.ghost?.remove();
+  if (!d.moved) { if (d.wasSel) { sel = null; renderBoard() } return }
+  const to = sqAt(e.clientX, e.clientY);
+  const mv = to && game.moves({ square: d.from, verbose: true }).find(m => m.to === to);
+  if (mv) onMove(mv); else renderBoard();
+}
+$('board').addEventListener('pointerup', endDrag);
+$('board').addEventListener('pointercancel', e => { if (drag) { drag.ghost?.remove(); drag = null; renderBoard() } });
+
+function onMove(mv) { if (mode === 'ai') aiPlayerMove(mv); else tryMove(mv) }
+function setMsg(t, cls) { const m = $('msg'); m.textContent = t; m.className = 'msg ' + (cls || '') }
+
+// ---------- Rätsel ----------
+let cur = 0, step = 0, fails = 0, hints = 0;
+function startPos(a) { const c = new Chess(); if (a.start) c.load(a.start); else a.vor.forEach(m => c.move(m)); return c }
+function lastOf(a) { if (a.start) return null; const c = new Chess(); let m; a.vor.forEach(x => m = c.move(x)); return m ? [m.from, m.to] : null }
+
+function openPuzzle(i) {
+  mode = 'puzzle'; cur = i; curKap = AUFGABEN[i].k; const a = AUFGABEN[i];
+  game = startPos(a); me = game.turn(); step = 0; sel = null; busy = false; fails = 0; hints = 0; over = false; hint = null;
+  lastMove = lastOf(a);
+  const n = kapItems(a.k).findIndex(x => x.i === i) + 1;
+  $('playNum').textContent = 'Rätsel ' + n + ' von ' + kapItems(a.k).length;
+  $('tTitle').textContent = a.titel; $('tText').textContent = a.text; $('tText').hidden = false;
+  $('tDot').style.background = me === 'w' ? '#fff' : '#1D2B53';
+  $('puzzleTools').hidden = false; $('aiTools').hidden = true; $('moveList').textContent = '';
+  setTurnText(); setMsg('', ''); $('bHint').classList.remove('glow');
+  renderBoard(); view('vPlay');
+}
+function myMoves() { return Math.ceil(AUFGABEN[cur].loesung.length / 2) }
+function setTurnText() {
+  const a = AUFGABEN[cur], farbe = me === 'w' ? 'Weiß' : 'Schwarz', nr = step / 2 + 1, n = myMoves();
+  const ziel = a.ziel === 'matt' ? (n === 1 ? 'Setze matt in 1 Zug!' : `Setze matt in ${n} Zügen!`) : (n === 1 ? 'Finde den besten Zug!' : 'Finde die beste Zugfolge!');
+  $('tTurn').textContent = `Du spielst ${farbe}. ${ziel}` + (n > 1 ? ` (Zug ${Math.min(nr, n)} von ${n})` : '');
+}
+// Tipp-Stufen: 1 = Text + Figur leuchtet, 2 = Zielfeld + Pfeil + genaue Ansage
+function solutionMove() { const c = new Chess(game.fen()); return c.move(AUFGABEN[cur].loesung[step]) }
+function showHint(lvl, quiet) {
+  const a = AUFGABEN[cur], m = solutionMove();
+  if (!hint || hint.lvl < lvl) hint = { from: m.from, to: m.to, lvl };
+  sel = null; renderBoard();
+  if (hint.lvl === 1) { setMsg((quiet ? 'Nein. ' : '') + '💡 ' + a.tipp, ''); if (!quiet) say(a.tipp) }
+  else {
+    const t = `Zieh ${DEN[m.piece]} von ${m.from} nach ${m.to}.`;
+    setMsg((quiet ? 'Nein. ' : '') + '👉 ' + t + ' Folge dem blauen Pfeil!', ''); if (!quiet) say(t);
+  }
+}
+$('bHint').onclick = () => {
+  if (over || busy || mode !== 'puzzle') return;
+  hints++; $('bHint').classList.remove('glow');
+  showHint(hint ? Math.min(hint.lvl + 1, 2) : 1);
+};
 
 function tryMove(mv) {
   const a = AUFGABEN[cur], want = a.loesung[step];
@@ -256,57 +377,131 @@ function tryMove(mv) {
   const ok = clean(res.san) === clean(want) || (a.ziel === 'matt' && game.isCheckmate());
   if (!ok) {
     game.undo(); fails++; sel = null; renderBoard();
-    const el = document.querySelector(`[data-sq="${mv.to}"]`); el?.classList.add('shake');
-    setMsg(fails >= 2 ? 'Fast! Schau dir den Tipp an. 💡' : 'Das ist erlaubt, aber nicht der beste Zug. Probier nochmal!', 'bad');
-    say(fails >= 2 ? 'Fast! Schau dir den Tipp an.' : 'Probier nochmal!');
-    if (fails >= 2) $('bHint').classList.add('glow');
-    if (fails >= 3) $('bSolve').hidden = false;
+    document.querySelector(`[data-sq="${mv.to}"]`)?.classList.add('shake');
+    say('Nein.');
+    if (fails >= 4) { showHint(2, true); return }
+    if (fails >= 2) { showHint(1, true); return }
+    setMsg('Nein, das ist nicht der beste Zug. Probier nochmal!', 'bad');
     return;
   }
-  sel = null; hintSq = null; lastMove = [res.from, res.to]; step++; renderBoard();
+  sel = null; hint = null; lastMove = [res.from, res.to]; step++; renderBoard();
   if (game.isCheckmate() || step >= a.loesung.length) { finish(); return }
   setMsg(res.san.includes('+') ? 'Schach! Super Zug! 👍' : 'Super Zug! 👍', 'good');
   say(res.san.includes('+') ? 'Schach! Super Zug!' : 'Super Zug!');
   busy = true;
   setTimeout(() => {
+    if (mode !== 'puzzle') return;
     const r = game.move(a.loesung[step]); step++; lastMove = [r.from, r.to]; busy = false;
     setTurnText(); setMsg('Jetzt du!', ''); renderBoard();
   }, 900);
 }
 
 function finish() {
-  solved = true; const a = AUFGABEN[cur];
-  const stars = fails === 0 && hints === 0 ? 3 : fails + hints <= 2 ? 2 : 1;
+  over = true; const a = AUFGABEN[cur];
+  const stars = fails === 0 && hints === 0 ? 3 : fails + hints <= 3 ? 2 : 1;
   if ((best[cur] || 0) < stars) { best[cur] = stars; store.set('best', best) }
   showStars();
   const matt = game.isCheckmate();
+  const text = a.ende || (matt ? 'Du hast den König gefangen.' : 'Du hast eine Figur gewonnen.');
   $('winStars').innerHTML = starHTML(stars);
   $('winTitle').textContent = matt ? 'Schachmatt! 🎉' : 'Geschafft! 🎉';
-  $('winText').textContent = matt ? 'Du hast den König gefangen.' : 'Du hast eine Figur gewonnen.';
+  $('winText').textContent = text;
   setMsg(matt ? 'Schachmatt!' : 'Geschafft!', 'good');
-  say(matt ? 'Schachmatt! Toll gemacht!' : 'Geschafft! Toll gemacht!');
-  const next = AUFGABEN.findIndex((x, i) => i > cur);
-  $('winNext').hidden = next < 0;
-  setTimeout(() => { if (solved && !$('vPlay').hidden) $('win').hidden = false }, 900);
+  say((matt ? 'Schachmatt! ' : 'Geschafft! ') + text);
+  const next = AUFGABEN.findIndex((x, i) => i > cur && x.k === a.k);
+  $('winNext').hidden = next < 0; $('winNext').dataset.next = next;
+  setTimeout(() => { if (over && mode === 'puzzle' && !$('vPlay').hidden) $('win').hidden = false }, 900);
 }
-$('winNext').onclick = () => { $('win').hidden = true; openPuzzle(cur + 1) };
+$('winNext').onclick = () => { $('win').hidden = true; openPuzzle(+$('winNext').dataset.next) };
 $('winList').onclick = () => { $('win').hidden = true; openKap(AUFGABEN[cur].k) };
-
 $('bSpeak').onclick = () => { const a = AUFGABEN[cur]; say(a.titel + '. ' + a.text) };
-$('bHint').onclick = () => {
-  if (solved || busy) return; hints++; $('bHint').classList.remove('glow');
-  const a = AUFGABEN[cur], c = new Chess(game.fen()), m = c.move(a.loesung[step]);
-  hintSq = m.from; sel = null; renderBoard();
-  setMsg('💡 ' + a.tipp, ''); say(a.tipp);
-};
-$('bSolve').onclick = () => {
-  if (solved || busy) return; const a = AUFGABEN[cur], c = new Chess(game.fen()), m = c.move(a.loesung[step]);
-  hints += 2; hintSq = null; sel = m.from; renderBoard();
-  document.querySelector(`[data-sq="${m.to}"]`)?.classList.add('hint');
-  setMsg(`Zieh ${me === 'w' ? 'den weißen' : 'den schwarzen'} ${NAME[m.piece]} von ${m.from} nach ${m.to}.`, '');
-};
 $('bReset').onclick = () => openPuzzle(cur);
 
+// ---------- Partie gegen den Computer ----------
+let aiLevel = store.get('aiLevel', 1), aiColor = store.get('aiColor', 'w');
+function segSet(id, v) { document.querySelectorAll('#' + id + ' button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v == v)) }
+document.querySelectorAll('#segLevel button').forEach(b => b.onclick = () => { aiLevel = +b.dataset.v; store.set('aiLevel', aiLevel); segSet('segLevel', aiLevel) });
+document.querySelectorAll('#segColor button').forEach(b => b.onclick = () => { aiColor = b.dataset.v; store.set('aiColor', aiColor); segSet('segColor', aiColor) });
+function openSetup() { mode = null; segSet('segLevel', aiLevel); segSet('segColor', aiColor); $('aiResume').hidden = !store.get('aiGame', null); view('vSetup') }
+$('goAI').onclick = openSetup;
+$('aiStart').onclick = () => startAI(aiColor === 'r' ? (Math.random() < .5 ? 'w' : 'b') : aiColor, aiLevel, null);
+$('aiResume').onclick = () => { const g = store.get('aiGame', null); if (g) startAI(g.me, g.level, g.pgn) };
+const LVLNAME = { 1: 'Leicht 🐣', 2: 'Mittel 🦊', 3: 'Stark 🦁' };
+let aiLvlCur = 1;
+function startAI(color, level, pgn) {
+  mode = 'ai'; me = color; aiLvlCur = level; game = new Chess(); if (pgn) { try { game.loadPgn(pgn) } catch (e) { game = new Chess() } }
+  sel = null; busy = false; over = false; hint = null;
+  const h = game.history({ verbose: true }); lastMove = h.length ? [h[h.length - 1].from, h[h.length - 1].to] : null;
+  $('playNum').textContent = 'Computer: ' + LVLNAME[level];
+  $('tTitle').textContent = 'Partie gegen den Computer'; $('tText').hidden = true;
+  $('tDot').style.background = me === 'w' ? '#fff' : '#1D2B53';
+  $('puzzleTools').hidden = true; $('aiTools').hidden = false;
+  view('vPlay'); aiStatus(); renderBoard(); saveAI();
+  if (game.turn() !== me && !game.isGameOver()) aiThink();
+}
+function moveListText() {
+  const h = game.history(); let s = '';
+  for (let i = 0; i < h.length; i += 2) s += (i / 2 + 1) + '. ' + h[i] + (h[i + 1] ? ' ' + h[i + 1] : '') + '  ';
+  return s.trim().split('  ').slice(-6).join('  ');
+}
+function aiStatus(extra) {
+  $('moveList').textContent = moveListText();
+  if (game.isGameOver()) return gameOver();
+  const mine = game.turn() === me;
+  $('tTurn').textContent = `Du spielst ${me === 'w' ? 'Weiß' : 'Schwarz'}. ` + (mine ? 'Du bist dran!' : 'Der Computer denkt nach …');
+  if (extra) setMsg(extra[0], extra[1]);
+  else setMsg(mine && game.inCheck() ? 'Achtung, Schach! Rette deinen König.' : '', mine && game.inCheck() ? 'bad' : '');
+}
+function aiPlayerMove(mv) {
+  const res = game.move({ from: mv.from, to: mv.to, promotion: 'q' });
+  sel = null; hint = null; lastMove = [res.from, res.to]; renderBoard(); saveAI();
+  if (game.isGameOver()) { aiStatus(); return }
+  aiStatus(res.captured ? ['Du hast ' + DEN[res.captured] + ' geschlagen! 👍', 'good'] : null);
+  aiThink();
+}
+function aiThink() {
+  busy = true; aiStatus();
+  setTimeout(() => {
+    if (mode !== 'ai') return;
+    const san = bestMove(game.fen(), aiLvlCur);
+    if (mode !== 'ai' || !san) { busy = false; return }
+    const r = game.move(san); lastMove = [r.from, r.to]; busy = false; renderBoard(); saveAI();
+    if (r.captured) { aiStatus(['Der Computer hat ' + DEN[r.captured] + ' geschlagen.', 'bad']); if (game.inCheck()) setMsg('Schach! Und der Computer hat ' + DEN[r.captured] + ' geschlagen.', 'bad') }
+    else aiStatus();
+    if (game.inCheck() && !game.isGameOver()) say('Schach!');
+  }, 350);
+}
+function gameOver() {
+  over = true; busy = false; let t, cls = '';
+  if (game.isCheckmate()) { const iWon = game.turn() !== me; t = iWon ? 'Schachmatt! Du hast gewonnen! 🎉' : 'Schachmatt. Der Computer hat gewonnen.'; cls = iWon ? 'good' : 'bad';
+    if (iWon) { const w = store.get('aiWins', {}); w[aiLvlCur] = (w[aiLvlCur] || 0) + 1; store.set('aiWins', w) } }
+  else if (game.isStalemate()) t = 'Patt! Unentschieden.';
+  else t = 'Unentschieden.';
+  $('tTurn').textContent = 'Partie vorbei.'; setMsg(t, cls); say(t.replace(/🎉/g, ''));
+  store.set('aiGame', null);
+}
+function saveAI() { if (mode === 'ai' && !game.isGameOver()) store.set('aiGame', { me, level: aiLvlCur, pgn: game.pgn() }) }
+$('aUndo').onclick = () => {
+  if (mode !== 'ai' || busy) return;
+  if (game.history().length === 0) return;
+  game.undo(); if (game.turn() !== me) game.undo();
+  over = false; sel = null; hint = null; const h = game.history({ verbose: true }); lastMove = h.length ? [h[h.length - 1].from, h[h.length - 1].to] : null;
+  renderBoard(); aiStatus(['Zug zurückgenommen.', '']); saveAI();
+  if (game.turn() !== me) aiThink();
+};
+$('aNew').onclick = () => { store.set('aiGame', null); openSetup() };
+$('aHint').onclick = () => {
+  if (!canPlay() || mode !== 'ai') return;
+  setMsg('Ich überlege …', '');
+  setTimeout(() => {
+    const san = bestMove(game.fen(), 2); if (!san) return;
+    const c = new Chess(game.fen()), m = c.move(san);
+    hint = { from: m.from, to: m.to, lvl: 2 }; renderBoard();
+    const t = `Ein guter Zug: ${DEN[m.piece]} von ${m.from} nach ${m.to}.`; setMsg('💡 ' + t, ''); say(t);
+  }, 30);
+};
+
+$('voiceBtn').onclick = nextVoice;
 renderHome();
 </script>
 </body>

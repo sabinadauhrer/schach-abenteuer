@@ -2,11 +2,14 @@
 // start: FEN-Stellung ODER vor: Züge ab der Grundstellung (dann ist die Stellung garantiert echt).
 // loesung: abwechselnd dein Zug, Antwort des Gegners, dein Zug …
 // ziel: 'matt' = am Ende steht Matt, 'gewinn' = du gewinnst eine Figur.
+const G = s => s.split(' ');
+
 export const KAPITEL = [
   { id: 'matt1', name: 'Matt in 1', icon: '♛' },
   { id: 'fallen', name: 'Berühmte Fallen', icon: '🪤' },
   { id: 'taktik', name: 'Tricks', icon: '🍴' },
   { id: 'matt2', name: 'Matt in 2 und 3', icon: '♞' },
+  { id: 'sowjet', name: 'Sowjetische Schule', icon: '🏅' },
   { id: 'partien', name: 'Berühmte Partien', icon: '🏆' },
 ];
 
@@ -76,9 +79,9 @@ export const AUFGABEN = [
     tipp: 'Der Bauer läuft ein Feld vor, zwischen Springer und Läufer.',
     start: '4k3/8/8/2n1b3/8/3PP3/8/7K w - - 0 1', loesung: ['d4', 'Nd7', 'dxe5'], ziel: 'gewinn' },
   { k: 'taktik', titel: 'Die Damen-Gabel',
-    text: 'Die Dame gibt Schach und greift gleichzeitig den Turm an.',
-    tipp: 'Von e4 aus sieht die Dame den König und den Turm auf a8.',
-    start: 'r3k3/8/8/8/8/8/8/4K2Q w - - 0 1', loesung: ['Qe4+', 'Kd8', 'Qxa8+'], ziel: 'gewinn' },
+    text: 'Die Dame gibt Schach und greift gleichzeitig den Turm an. Pass auf: Der Turm darf die Dame nicht schlagen können!',
+    tipp: 'Von c6 aus sieht die Dame den König auf e8 und den Turm auf a4.',
+    start: '4k3/8/8/8/r7/8/8/4K2Q w - - 0 1', loesung: ['Qc6+', 'Kf7', 'Qxa4'], ziel: 'gewinn' },
 
   // ---------- Matt in 2 ----------
   { k: 'matt2', titel: 'Philidors Vermächtnis',
@@ -102,4 +105,75 @@ export const AUFGABEN = [
     tipp: 'Die Dame geht auf d8 und gibt Schach.',
     vor: ['e4', 'c6', 'd4', 'd5', 'Nc3', 'dxe4', 'Nxe4', 'Nf6', 'Qd3', 'e5', 'dxe5', 'Qa5+', 'Bd2', 'Qxe5', 'O-O-O', 'Nxe4'],
     loesung: ['Qd8+', 'Kxd8', 'Bg5+', 'Kc7', 'Bd8#'], ziel: 'matt' },
+  // ---------- mehr Mattbilder ----------
+  { k: 'matt1', titel: 'Das Epaulettenmatt',
+    text: 'Die eigenen Türme stehen links und rechts vom König wie die Schulterklappen einer Uniform. Sie nehmen ihm die Fluchtfelder weg.',
+    tipp: 'Die Dame geht auf e6, genau vor den König.',
+    start: '3rkr2/8/8/8/8/1Q6/8/4K3 w - - 0 1', loesung: ['Qe6#'], ziel: 'matt' },
+  { k: 'matt1', titel: 'Morphys Matt',
+    text: 'Der Turm hält die g-Linie zu. Der Läufer gibt Schach über die lange Diagonale.',
+    tipp: 'Der Läufer geht auf b2.',
+    start: '7k/7p/8/8/8/8/8/2B3RK w - - 0 1', loesung: ['Bb2#'], ziel: 'matt' },
+  { k: 'matt2', titel: 'Bodens Matt',
+    text: 'Zwei Läufer kreuzen sich wie eine Schere. Samuel Boden gewann so im Jahr 1853. Zuerst opferst du die Dame!',
+    tipp: 'Die Dame schlägt auf c6. Danach kommt der Läufer nach a6.',
+    start: '2kr4/pp1n4/2p5/8/4QB2/8/4B3/6K1 w - - 0 1', loesung: ['Qxc6+', 'bxc6', 'Ba6#'], ziel: 'matt' },
+
+  // ---------- mehr Tricks ----------
+  { k: 'taktik', titel: 'Die Fesselung',
+    text: 'Der schwarze Springer kann nicht weglaufen. Hinter ihm steht sein König. Greif den gefesselten Springer an!',
+    tipp: 'Der Bauer läuft nach d5.',
+    start: '4k3/1p6/2n5/1B6/3P4/8/8/4K3 w - - 0 1', loesung: ['d5', 'Kd7', 'dxc6+'], ziel: 'gewinn' },
+  { k: 'taktik', titel: 'Das Abzugsschach',
+    text: 'Dein Läufer steht vor deinem Turm. Wenn der Läufer wegzieht, gibt der Turm Schach. Dann kann der Läufer schlagen, was er will!',
+    tipp: 'Der Läufer schlägt die Dame auf a8.',
+    start: 'q3k3/8/8/8/4B3/8/8/4R1K1 w - - 0 1', loesung: ['Bxa8+'], ziel: 'gewinn' },
+  { k: 'taktik', titel: 'Der Bauern-Durchbruch',
+    text: 'Drei gegen drei Bauern, aber einer von deinen kommt durch und wird eine Dame! Ein berühmtes Beispiel aus alten Schachbüchern.',
+    tipp: 'Der mittlere Bauer geht zuerst: b6! Danach opfert sich noch ein Bauer.',
+    start: '7k/ppp5/8/PPP5/8/8/8/7K w - - 0 1', loesung: ['b6', 'axb6', 'c6', 'bxc6', 'a6', 'Kg7', 'a7', 'Kf7', 'a8=Q'], ziel: 'gewinn',
+    ende: 'Dein Bauer ist eine Dame geworden!' },
+
+  // ---------- Sowjetische Schule ----------
+  { k: 'sowjet', titel: 'Botvinnik gegen Capablanca (1938)',
+    text: 'Michail Botwinnik war der erste sowjetische Weltmeister. Diese Kombination ist eine der berühmtesten überhaupt. In Amsterdam gab es die Stellung sogar als Torte in einer Bäckerei! Dein Bauer auf e6 will eine Dame werden.',
+    tipp: 'Opfere den Läufer auf a3. Danach springt der Springer mit Schach nach h5.',
+    vor: G('d4 Nf6 c4 e6 Nc3 Bb4 e3 d5 a3 Bxc3+ bxc3 c5 cxd5 exd5 Bd3 O-O Ne2 b6 O-O Ba6 Bxa6 Nxa6 Bb2 Qd7 a4 Rfe8 Qd3 c4 Qc2 Nb8 Rae1 Nc6 Ng3 Na5 f3 Nb3 e4 Qxa4 e5 Nd7 Qf2 g6 f4 f5 exf6 Nxf6 f5 Rxe1 Rxe1 Re8 Re6 Rxe6 fxe6 Kg7 Qf4 Qe8 Qe5 Qe7'),
+    loesung: ['Ba3', 'Qxa3', 'Nh5+', 'gxh5', 'Qg5+', 'Kf8', 'Qxf6+', 'Kg8', 'e7'], ziel: 'gewinn',
+    ende: 'Der Bauer wird eine Dame. Capablanca musste bald aufgeben.' },
+  { k: 'sowjet', titel: 'Kasparows Unsterbliche (1999)',
+    text: 'Garri Kasparow lernte Schach in der sowjetischen Schachschule von Botwinnik. In Wijk aan Zee opferte er einen Turm und jagte den schwarzen König über das ganze Brett. Für Profis!',
+    tipp: 'Der Turm schlägt auf d4! Danach gibt der andere Turm Schach auf e7.',
+    vor: G('e4 d6 d4 Nf6 Nc3 g6 Be3 Bg7 Qd2 c6 f3 b5 Nge2 Nbd7 Bh6 Bxh6 Qxh6 Bb7 a3 e5 O-O-O Qe7 Kb1 a6 Nc1 O-O-O Nb3 exd4 Rxd4 c5 Rd1 Nb6 g3 Kb8 Na5 Ba8 Bh3 d5 Qf4+ Ka7 Rhe1 d4 Nd5 Nbxd5 exd5 Qd6'),
+    loesung: ['Rxd4', 'cxd4', 'Re7+', 'Kb6', 'Qxd4+', 'Kxa5', 'b4+', 'Ka4', 'Qc3'], ziel: 'gewinn',
+    ende: 'Der schwarze König ist in deinem Netz gefangen. Topalov verlor die Partie.' },
+
+  // ---------- Berühmte Partien ----------
+  { k: 'partien', titel: 'Die Unsterbliche Partie (1851)',
+    text: 'Adolf Anderssen hat in London fast alle seine Figuren geopfert: beide Türme und einen Läufer. Und trotzdem setzt er matt!',
+    tipp: 'Die Dame opfert sich auf f6. Dann kommt der Läufer nach e7.',
+    vor: G('e4 e5 f4 exf4 Bc4 Qh4+ Kf1 b5 Bxb5 Nf6 Nf3 Qh6 d3 Nh5 Nh4 Qg5 Nf5 c6 g4 Nf6 Rg1 cxb5 h4 Qg6 h5 Qg5 Qf3 Ng8 Bxf4 Qf6 Nc3 Bc5 Nd5 Qxb2 Bd6 Bxg1 e5 Qxa1+ Ke2 Na6 Nxg7+ Kd8'),
+    loesung: ['Qf6+', 'Nxf6', 'Be7#'], ziel: 'matt' },
+  { k: 'partien', titel: 'Die Immergrüne Partie (1852)',
+    text: 'Noch eine Partie von Anderssen, gegen Dufresne in Berlin. Turm, Dame und dann die Läufer: ein Opfer nach dem anderen!',
+    tipp: 'Zuerst schlägt der Turm auf e7 mit Schach. Dann opfert sich die Dame auf d7.',
+    vor: G('e4 e5 Nf3 Nc6 Bc4 Bc5 b4 Bxb4 c3 Ba5 d4 exd4 O-O d3 Qb3 Qf6 e5 Qg6 Re1 Nge7 Ba3 b5 Qxb5 Rb8 Qa4 Bb6 Nbd2 Bb7 Ne4 Qf5 Bxd3 Qh5 Nf6+ gxf6 exf6 Rg8 Rad1 Qxf3'),
+    loesung: ['Rxe7+', 'Nxe7', 'Qxd7+', 'Kxd7', 'Bf5+', 'Ke8', 'Bd7+', 'Kf8', 'Bxe7#'], ziel: 'matt' },
+  { k: 'partien', titel: 'Rubinsteins Unsterbliche (1907)',
+    text: 'Akiba Rubinstein spielt Schwarz und opfert seine Dame. Danach regnen die Türme auf Weiß herab. Du spielst Schwarz.',
+    tipp: 'Lass die Dame stehen! Der Turm schlägt auf c3.',
+    vor: G('d4 d5 Nf3 e6 e3 c5 c4 Nc6 Nc3 Nf6 dxc5 Bxc5 a3 a6 b4 Bd6 Bb2 O-O Qd2 Qe7 Bd3 dxc4 Bxc4 b5 Bd3 Rd8 Qe2 Bb7 O-O Ne5 Nxe5 Bxe5 f4 Bc7 e4 Rac8 e5 Bb6+ Kh1 Ng4 Be4 Qh4 g3'),
+    loesung: ['Rxc3', 'gxh4', 'Rd2', 'Qxd2', 'Bxe4+', 'Qg2', 'Rh3'], ziel: 'gewinn',
+    ende: 'Weiß gibt auf: Turm schlägt h2 ist Matt, und Weiß kann es nicht verhindern.' },
+  { k: 'partien', titel: 'Der Goldmünzen-Zug (1912)',
+    text: 'Frank Marshall spielt Schwarz und stellt seine Dame dorthin, wo sie dreimal geschlagen werden kann. Die Zuschauer sollen danach Goldmünzen aufs Brett geworfen haben! Du spielst Schwarz.',
+    tipp: 'Die Dame geht auf g3.',
+    vor: G('d4 e6 e4 d5 Nc3 c5 Nf3 Nc6 exd5 exd5 Be2 Nf6 O-O Be7 Bg5 O-O dxc5 Be6 Nd4 Bxc5 Nxe6 fxe6 Bg4 Qd6 Bh3 Rae8 Qd2 Bb4 Bxf6 Rxf6 Rad1 Qc5 Qe2 Bxc3 bxc3 Qxc3 Rxd5 Nd4 Qh5 Ref8 Re5 Rh6 Qg5 Rxh3 Rc5'),
+    loesung: ['Qg3'], ziel: 'gewinn',
+    ende: 'Weiß gibt auf! Schlägt Weiß die Dame, kommt ein Springer- oder Turm-Matt.' },
+  { k: 'partien', titel: 'Fischers Jahrhundertpartie (1956)',
+    text: 'Bobby Fischer war erst 13 Jahre alt! Am Ende jagen seine kleinen Figuren den weißen König, bis ein Turm matt setzt. Du spielst Schwarz.',
+    tipp: 'Gib mit dem Läufer Schach auf b3.',
+    vor: G('Nf3 Nf6 c4 g6 Nc3 Bg7 d4 O-O Bf4 d5 Qb3 dxc4 Qxc4 c6 e4 Nbd7 Rd1 Nb6 Qc5 Bg4 Bg5 Na4 Qa3 Nxc3 bxc3 Nxe4 Bxe7 Qb6 Bc4 Nxc3 Bc5 Rfe8+ Kf1 Be6 Bxb6 Bxc4+ Kg1 Ne2+ Kf1 Nxd4+ Kg1 Ne2+ Kf1 Nc3+ Kg1 axb6 Qb4 Ra4 Qxb6 Nxd1 h3 Rxa2 Kh2 Nxf2 Re1 Rxe1 Qd8+ Bf8 Nxe1 Bd5 Nf3 Ne4 Qb8 b5 h4 h5 Ne5 Kg7 Kg1 Bc5+ Kf1 Ng3+ Ke1 Bb4+ Kd1'),
+    loesung: ['Bb3+', 'Kc1', 'Ne2+', 'Kb1', 'Nc3+', 'Kc1', 'Rc2#'], ziel: 'matt' },
 ];
