@@ -196,8 +196,20 @@ function nextVoice() {
 }
 function say(text) {
   if (!('speechSynthesis' in window)) return;
-  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'de-DE'; if (voice) u.voice = voice; u.rate = .95; speechSynthesis.speak(u) } catch (e) {}
+  try {
+    const u = new SpeechSynthesisUtterance(text); u.lang = 'de-DE'; if (voice) u.voice = voice; u.rate = .95;
+    // Safari verschluckt manchmal einen Satz, der direkt nach cancel() kommt
+    if (speechSynthesis.speaking || speechSynthesis.pending) { speechSynthesis.cancel(); setTimeout(() => speechSynthesis.speak(u), 80) }
+    else speechSynthesis.speak(u);
+  } catch (e) {}
 }
+// iPhone/iPad: Ton erst nach dem ersten Loslassen des Fingers freischalten
+let speechReady = false;
+function unlockSpeech() {
+  if (speechReady || !('speechSynthesis' in window)) return; speechReady = true;
+  try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u) } catch (e) {}
+}
+['pointerup', 'touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, unlockSpeech, { capture: true }));
 function hush() { try { speechSynthesis.cancel() } catch (e) {} }
 
 // ---------- Figuren ----------
@@ -256,15 +268,15 @@ function renderBoard() {
     if (lastMove && lastMove.includes(sq)) d.classList.add('last');
     if (sq === sel) d.classList.add('selp');
     if (sq === kingChk) d.classList.add('chk');
-    if (hint && hint.lvl >= 1 && sq === hint.from) d.classList.add('hint');
-    if (hint && hint.lvl >= 2 && sq === hint.to) d.classList.add('hint2');
+    if (hint && hint.lvl >= 2 && sq === hint.from) d.classList.add('hint');
+    if (hint && hint.lvl >= 3 && sq === hint.to) d.classList.add('hint2');
     const t = tg.find(m => m.to === sq); if (t) { d.classList.add('tgt'); if (t.captured) d.classList.add('cap') }
     if (r === 7) d.insertAdjacentHTML('beforeend', `<span class="co f">${FILES[file]}</span>`);
     if (f === 0) d.insertAdjacentHTML('beforeend', `<span class="co r">${rank}</span>`);
     d.onclick = e => { if (e.detail === 0) tap(sq) };   // Tastatur
     B.appendChild(d);
   }
-  if (hint && hint.lvl >= 2) drawArrow(hint.from, hint.to);
+  if (hint && hint.lvl >= 3) drawArrow(hint.from, hint.to);
 }
 function sqCenter(sq) {
   const flip = me === 'b', f = FILES.indexOf(sq[0]), r = +sq[1];
@@ -299,14 +311,15 @@ const sqAt = (x, y) => { const el = document.elementFromPoint(x, y); const s = e
 $('board').addEventListener('pointerdown', e => {
   const sq = sqAt(e.clientX, e.clientY); if (!sq || !canPlay()) return;
   const p = game.get(sq);
-  if (!(p && p.color === me)) { tap(sq); return }
+  // Leeres/gegnerisches Feld: erst beim Loslassen ziehen (sonst blockiert Safari den Ton)
+  if (!(p && p.color === me)) { drag = { tapOnly: sq, id: e.pointerId }; return }
   const wasSel = sel === sq; sel = sq; renderBoard();
   drag = { from: sq, x: e.clientX, y: e.clientY, moved: false, wasSel, ghost: null, id: e.pointerId };
   try { $('board').setPointerCapture(e.pointerId) } catch (er) {}
   e.preventDefault();
 });
 $('board').addEventListener('pointermove', e => {
-  if (!drag || e.pointerId !== drag.id) return;
+  if (!drag || e.pointerId !== drag.id || drag.tapOnly) return;
   if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 8) return;
   if (!drag.moved) {
     drag.moved = true; const p = game.get(drag.from);
@@ -318,7 +331,9 @@ $('board').addEventListener('pointermove', e => {
 });
 function endDrag(e) {
   if (!drag || e.pointerId !== drag.id) return;
-  const d = drag; drag = null; d.ghost?.remove();
+  const d = drag; drag = null;
+  if (d.tapOnly) { if (sqAt(e.clientX, e.clientY) === d.tapOnly) tap(d.tapOnly); return }
+  d.ghost?.remove();
   if (!d.moved) { if (d.wasSel) { sel = null; renderBoard() } return }
   const to = sqAt(e.clientX, e.clientY);
   const mv = to && game.moves({ square: d.from, verbose: true }).find(m => m.to === to);
@@ -353,13 +368,16 @@ function setTurnText() {
   const ziel = a.ziel === 'matt' ? (n === 1 ? 'Setze matt in 1 Zug!' : `Setze matt in ${n} Zügen!`) : (n === 1 ? 'Finde den besten Zug!' : 'Finde die beste Zugfolge!');
   $('tTurn').textContent = `Du spielst ${farbe}. ${ziel}` + (n > 1 ? ` (Zug ${Math.min(nr, n)} von ${n})` : '');
 }
-// Tipp-Stufen: 1 = Text + Figur leuchtet, 2 = Zielfeld + Pfeil + genaue Ansage
+// Tipp-Stufen: 1 = nur Worte, 2 = Figur leuchtet, 3 = Zielfeld + Pfeil + genaue Ansage
+// Von selbst kommt Hilfe erst nach vielen falschen Zügen.
+const AUTO_HILFE = 30;
 function solutionMove() { const c = new Chess(game.fen()); return c.move(AUFGABEN[cur].loesung[step]) }
 function showHint(lvl, quiet) {
   const a = AUFGABEN[cur], m = solutionMove();
   if (!hint || hint.lvl < lvl) hint = { from: m.from, to: m.to, lvl };
   sel = null; renderBoard();
-  if (hint.lvl === 1) { setMsg((quiet ? 'Nein. ' : '') + '💡 ' + a.tipp, ''); if (!quiet) say(a.tipp) }
+  if (hint.lvl === 1) { setMsg('💡 ' + a.tipp, ''); say(a.tipp) }
+  else if (hint.lvl === 2) { const t = `Nimm ${DEN[m.piece]}! Wohin soll die Figur ziehen?`; setMsg('💡 ' + t, ''); say(t) }
   else {
     const t = `Zieh ${DEN[m.piece]} von ${m.from} nach ${m.to}.`;
     setMsg((quiet ? 'Nein. ' : '') + '👉 ' + t + ' Folge dem blauen Pfeil!', ''); if (!quiet) say(t);
@@ -368,7 +386,7 @@ function showHint(lvl, quiet) {
 $('bHint').onclick = () => {
   if (over || busy || mode !== 'puzzle') return;
   hints++; $('bHint').classList.remove('glow');
-  showHint(hint ? Math.min(hint.lvl + 1, 2) : 1);
+  showHint(hint ? Math.min(hint.lvl + 1, 3) : 1);
 };
 
 function tryMove(mv) {
@@ -379,9 +397,8 @@ function tryMove(mv) {
     game.undo(); fails++; sel = null; renderBoard();
     document.querySelector(`[data-sq="${mv.to}"]`)?.classList.add('shake');
     say('Nein.');
-    if (fails >= 4) { showHint(2, true); return }
-    if (fails >= 2) { showHint(1, true); return }
-    setMsg('Nein, das ist nicht der beste Zug. Probier nochmal!', 'bad');
+    if (fails >= AUTO_HILFE) { showHint(3, true); return }
+    setMsg('Nein. Probier nochmal!', 'bad');
     return;
   }
   sel = null; hint = null; lastMove = [res.from, res.to]; step++; renderBoard();
@@ -496,7 +513,7 @@ $('aHint').onclick = () => {
   setTimeout(() => {
     const san = bestMove(game.fen(), 2); if (!san) return;
     const c = new Chess(game.fen()), m = c.move(san);
-    hint = { from: m.from, to: m.to, lvl: 2 }; renderBoard();
+    hint = { from: m.from, to: m.to, lvl: 3 }; renderBoard();
     const t = `Ein guter Zug: ${DEN[m.piece]} von ${m.from} nach ${m.to}.`; setMsg('💡 ' + t, ''); say(t);
   }, 30);
 };
