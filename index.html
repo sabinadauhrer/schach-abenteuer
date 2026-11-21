@@ -6,21 +6,23 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Schach">
-<meta name="theme-color" content="#EAF3E6">
+<meta name="theme-color" content="#FFF0F6">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 <title>Schach-Abenteuer</title>
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{
-  --bg:#EAF3E6;--paper:#fff;--ink:#1D2B53;--muted:#5F6B85;--line:#CCD8C4;
-  --light:#F3E6C8;--dark:#B58863;--pw:#ffffff;--pb:#1D2B53;--pws:#1D2B53;--pbs:transparent;--sel:#F7D046;--last:rgb(155 199 0 / .45);--hint:#4C9BE8;
-  --good:#2E9E5B;--bad:#D9443B;--sun:#FFC93C;
+  --bg:#FFF0F6;--paper:#fff;--ink:#5A3D6E;--muted:#9C83AE;--line:#F6CFE2;
+  --light:#FFF4FA;--dark:#FFB8D9;--pw:#ffffff;--pb:#8B5CF6;--pws:#5A3D6E;--pbs:transparent;--sel:#FFE27A;--last:rgb(255 226 122 / .55);--hint:#5EB8F2;
+  --good:#3DBE85;--bad:#F2668B;--sun:#FFD66B;--dino:#7ED9A0;--dino2:#5FC487;
   --piece-font:"Apple Symbols","Segoe UI Symbol","Noto Sans Symbols2","Noto Sans Symbols","DejaVu Sans",serif;
 }
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;height:100%}
-body{background:var(--bg);color:var(--ink);font:17px/1.4 ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",sans-serif;
+body{background:radial-gradient(circle at 12px 12px,rgb(255 184 217 / .35) 3px,transparent 3.5px) 0 0/44px 44px,radial-gradient(circle at 34px 34px,rgb(126 217 160 / .3) 3px,transparent 3.5px) 0 0/44px 44px,linear-gradient(180deg,#FFF0F6,#F1ECFF 60%,#E9FAF1);background-attachment:fixed;background-color:var(--bg);color:var(--ink);font:17px/1.35 "Baloo 2",ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",sans-serif;
   -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;
   padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(16px,env(safe-area-inset-left,0px))}
 button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation}
@@ -51,8 +53,8 @@ header h1{flex:1;margin:0;font-size:24px}
 .task p{margin:0;color:var(--muted)}
 .turn{display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:700}
 .turn .dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--ink)}
-.board{position:relative;width:min(100%,calc(100dvh - 370px));min-width:280px;margin:0 auto;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));
-  border-radius:12px;overflow:hidden;box-shadow:0 5px 0 rgb(29 43 83 / .25);touch-action:none}
+.board{position:relative;width:min(100%,calc(100dvh - 395px));min-width:280px;margin:0 auto;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));
+  border-radius:18px;overflow:hidden;border:5px solid #fff;box-shadow:0 6px 0 var(--line),0 10px 24px rgb(139 92 246 / .15);touch-action:none}
 .sq{position:relative;display:flex;align-items:center;justify-content:center;padding:0;border-radius:0;min-width:0;min-height:0;overflow:hidden}
 .board{container-type:inline-size}
 .sq .p{font-size:11cqi!important}
@@ -75,16 +77,52 @@ header h1{flex:1;margin:0;font-size:24px}
 .sq.l .co{color:var(--dark)}.sq.d .co{color:var(--light)}
 .shake{animation:shake .35s}
 @keyframes shake{25%{transform:translateX(-7px)}50%{transform:translateX(7px)}75%{transform:translateX(-4px)}}
-.msg{text-align:center;min-height:2.6em;margin:10px 0 6px;font-size:19px;font-weight:700}
-.msg.good{color:var(--good)}.msg.bad{color:var(--bad)}
+.msg{text-align:center;font-size:18px;font-weight:700}
+.msg.good{color:var(--good)}.msg.bad{color:var(--bad)}.msg.oops{color:#A77BD0}
+/* Dino */
+.dino svg{display:block;width:100%;height:auto;overflow:visible}
+.dino .eh,.dino .mo{display:none}
+.dino.happy .eo,.dino.think .ms{display:none}
+.dino.happy .eh,.dino.think .mo{display:inline}
+.dino{animation:bob 2.4s ease-in-out infinite;transform-origin:50% 100%}
+.dino.happy{animation:hop .5s ease-out 3}
+.dino.think{animation:wobble .7s ease-in-out 2}
+@keyframes bob{50%{transform:translateY(-4px) scaleY(1.02)}}
+@keyframes hop{30%{transform:translateY(-18px) rotate(-6deg)}60%{transform:translateY(0) scaleY(.92)}}
+@keyframes wobble{25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+.dino.big{width:120px;margin:0 auto}
+.dino.big .arm{transform-box:fill-box;transform-origin:80% 20%;animation:wave 1.2s ease-in-out infinite}
+@keyframes wave{50%{transform:rotate(-20deg)}}
+.bubble{position:relative;background:var(--paper);border-radius:22px;padding:10px 16px;box-shadow:0 4px 0 var(--line);font-weight:700}
+.hero .bubble{display:inline-block;margin-top:10px;max-width:340px}
+.hero .bubble::before{content:"";position:absolute;left:50%;top:-10px;margin-left:-10px;border:10px solid transparent;border-top:0;border-bottom-color:var(--paper)}
+.talk{display:flex;align-items:center;gap:10px;margin:12px 0 10px;max-width:560px}
+.dino.sm{width:58px;flex:none}
+.talk .bubble{flex:1;min-height:52px;display:flex;align-items:center;justify-content:center;text-align:center}
+.talk .bubble::before{content:"";position:absolute;left:-10px;top:50%;margin-top:-9px;border:9px solid transparent;border-left:0;border-right:11px solid var(--paper)}
+.talk .bubble:empty::after{content:"Du schaffst das! 💚";color:var(--muted);font-weight:600}
+.win-d{width:96px;margin:-70px auto 4px}
+.dino.dance,.win .dino{animation:dance .6s ease-in-out infinite}
+@keyframes dance{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-14px) rotate(-10deg)}50%{transform:translateY(0) scaleY(.92)}75%{transform:translateY(-14px) rotate(10deg)}}
+.dino.dance .eo,.win .dino .eo{display:none}.dino.dance .eh,.win .dino .eh{display:inline}
+.konfetti{position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden}
+.konfetti i{position:absolute;top:-60px;font-style:normal;animation:fall linear forwards;line-height:1}
+.konfetti i.pt{width:12px;height:16px;border-radius:4px}
+@keyframes fall{to{transform:translate(var(--dx),115vh) rotate(var(--r))}}
+.win .big .on{display:inline-block;animation:starpop .5s cubic-bezier(.3,1.8,.5,1) backwards}
+.win .big .on:nth-child(2){animation-delay:.25s}.win .big .on:nth-child(3){animation-delay:.5s}
+@keyframes starpop{from{transform:scale(0) rotate(-90deg)}}
+.win h2{color:#E25A9A}
 .tools{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .btn{height:52px;padding:0 18px;border-radius:26px;background:var(--paper);box-shadow:0 3px 0 var(--line);font-weight:700;font-size:17px}
-.btn.main{background:var(--good);color:#fff;box-shadow:0 4px 0 #1f7a43;font-size:19px;padding:0 26px}
+.btn.main{background:linear-gradient(180deg,#5FD49C,#3DBE85);color:#fff;box-shadow:0 4px 0 #2A9466;font-size:19px;padding:0 26px}
+.btn:active,.kap:active,.item:active,.back:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+header h1{font-weight:800;letter-spacing:.3px}
 .btn.glow{animation:glow 1s infinite alternate}
 @keyframes glow{to{box-shadow:0 3px 0 var(--line),0 0 0 6px rgb(76 155 232 / .45)}}
 /* Erfolg */
-.win{position:fixed;inset:0;z-index:20;background:rgb(29 43 83 / .45);display:flex;align-items:center;justify-content:center;padding:16px}
-.win .card{background:var(--paper);border-radius:28px;padding:26px 22px;text-align:center;width:min(100%,380px);box-shadow:0 8px 0 rgb(0 0 0 / .15);animation:pop .35s}
+.win{position:fixed;inset:0;z-index:20;background:rgb(90 61 110 / .4);display:flex;align-items:center;justify-content:center;padding:16px}
+.win .card{background:var(--paper);border-radius:32px;padding:26px 22px;margin-top:60px;text-align:center;width:min(100%,380px);box-shadow:0 8px 0 rgb(0 0 0 / .15);animation:pop .35s}
 .win .big{font-size:44px;color:#E8A800;letter-spacing:6px}
 .win h2{margin:6px 0;font-size:26px}
 .win p{color:var(--muted);margin:0 0 18px}
@@ -98,12 +136,15 @@ header h1{flex:1;margin:0;font-size:24px}
 .ghost.b{color:var(--pb);-webkit-text-stroke:1.4px var(--pbs);paint-order:stroke fill}
 .sq.from .p{opacity:.35}
 .sq.hint2::after{content:"";position:absolute;inset:3px;border:4px dashed var(--hint);border-radius:50%;pointer-events:none;animation:pulse 1s infinite alternate}
-.kap.ai{background:linear-gradient(135deg,#FFF6D8,#fff);border:3px solid var(--sun)}
+.kap.ai{background:linear-gradient(135deg,#FFF4CC,#fff);border:3px solid var(--sun)}
+#goFriend{background:linear-gradient(135deg,#E0F4FF,#fff)}#goColors{background:linear-gradient(135deg,#FFE3F1,#fff)}
+#kapList .kap:nth-child(4n+1){background:linear-gradient(135deg,#E3F9EC,#fff)}#kapList .kap:nth-child(4n+2){background:linear-gradient(135deg,#EFE6FF,#fff)}
+#kapList .kap:nth-child(4n+3){background:linear-gradient(135deg,#FFEBDD,#fff)}#kapList .kap:nth-child(4n){background:linear-gradient(135deg,#E0F4FF,#fff)}
 .setup{background:var(--paper);border-radius:22px;padding:16px;box-shadow:0 4px 0 var(--line);margin-bottom:14px}
 .setup h3{margin:0 0 10px;font-size:18px}
 .seg{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .seg button{flex:1;min-width:90px;height:54px;border-radius:18px;background:var(--bg);font-weight:700;font-size:17px;border:3px solid transparent}
-.seg button[aria-pressed="true"]{border-color:var(--good);background:#E3F5EA}
+.seg button[aria-pressed="true"]{border-color:var(--good);background:#E3F9EC}
 .moves{font-size:14px;color:var(--muted);text-align:center;min-height:1.4em;margin-top:6px;word-break:break-word}
 .code{font:800 44px/1 ui-monospace,Menlo,monospace;letter-spacing:8px;text-align:center;background:var(--bg);border-radius:16px;padding:14px 0;margin:6px 0 12px}
 .codein{width:100%;height:58px;border-radius:16px;border:3px solid var(--line);font:800 30px ui-monospace,Menlo,monospace;letter-spacing:6px;text-align:center;text-transform:uppercase;margin-bottom:10px;background:var(--paper);color:var(--ink)}
@@ -127,7 +168,7 @@ header h1{flex:1;margin:0;font-size:24px}
   <!-- Startseite -->
   <div id="vHome">
     <header><h1>Schach-Abenteuer</h1><span class="stars" id="starsHome">0</span></header>
-    <div class="hero"><div class="big">♞︎♛︎♚︎</div><p>Löse berühmte Schach-Rätsel aus Büchern und großen Partien – oder spiel gegen den Computer!</p></div>
+    <div class="hero"><div class="dino big" id="dHome"><svg viewBox="0 0 120 124" aria-hidden="true"><path d="M82 96 Q112 100 116 74 Q104 90 82 84Z" fill="var(--dino2)"/><g fill="#FFA8C8"><path d="M36 30 L44 6 L54 26Z"/><path d="M52 24 L61 0 L70 24Z"/><path d="M67 26 L77 6 L85 30Z"/></g><ellipse cx="60" cy="92" rx="31" ry="27" fill="var(--dino)"/><ellipse cx="60" cy="98" rx="18" ry="16" fill="#FFF1C1"/><ellipse cx="44" cy="118" rx="11" ry="6" fill="var(--dino2)"/><ellipse cx="76" cy="118" rx="11" ry="6" fill="var(--dino2)"/><ellipse class="arm" cx="31" cy="86" rx="6" ry="10" fill="var(--dino2)" transform="rotate(35 31 86)"/><ellipse cx="89" cy="86" rx="6" ry="10" fill="var(--dino2)" transform="rotate(-35 89 86)"/><circle cx="60" cy="52" r="35" fill="var(--dino)"/><g class="eo"><circle cx="46" cy="51" r="6.5" fill="#3B2A4A"/><circle cx="74" cy="51" r="6.5" fill="#3B2A4A"/><circle cx="48.5" cy="48" r="2.4" fill="#fff"/><circle cx="76.5" cy="48" r="2.4" fill="#fff"/></g><g class="eh" fill="none" stroke="#3B2A4A" stroke-width="4" stroke-linecap="round"><path d="M39 53 Q46 44 53 53"/><path d="M67 53 Q74 44 81 53"/></g><ellipse cx="36" cy="63" rx="6.5" ry="4" fill="#FF9EC0" opacity=".85"/><ellipse cx="84" cy="63" rx="6.5" ry="4" fill="#FF9EC0" opacity=".85"/><path class="ms" d="M53 62 Q60 69 67 62" fill="none" stroke="#3B2A4A" stroke-width="3.5" stroke-linecap="round"/><ellipse class="mo" cx="60" cy="65" rx="4" ry="4.5" fill="#3B2A4A"/></svg></div><div class="bubble">Hallo, ich bin Dino! 🦕 Lass uns zusammen Schach-Rätsel lösen!</div><p>Berühmte Rätsel aus Büchern und großen Partien – oder spiel gegen den Computer!</p></div>
     <button class="kap ai" id="goAI"><span class="ic">🤖</span><span><b>Gegen den Computer</b><small>Eine ganze Partie spielen</small></span></button>
     <button class="kap" id="goFriend"><span class="ic">👫</span><span><b>Gegen einen Freund</b><small>Am selben Gerät oder online mit Code</small></span></button>
     <button class="kap" id="goColors"><span class="ic">🎨</span><span><b>Farben</b><small>Figuren und Brett anmalen</small></span></button>
@@ -198,7 +239,7 @@ header h1{flex:1;margin:0;font-size:24px}
       <div class="turn"><span class="dot" id="tDot"></span><span id="tTurn"></span></div>
     </div>
     <div class="board" id="board" role="grid" aria-label="Schachbrett"></div>
-    <div class="msg" id="msg" aria-live="polite"></div>
+    <div class="talk"><div class="dino sm" id="dPlay"><svg viewBox="0 0 120 124" aria-hidden="true"><path d="M82 96 Q112 100 116 74 Q104 90 82 84Z" fill="var(--dino2)"/><g fill="#FFA8C8"><path d="M36 30 L44 6 L54 26Z"/><path d="M52 24 L61 0 L70 24Z"/><path d="M67 26 L77 6 L85 30Z"/></g><ellipse cx="60" cy="92" rx="31" ry="27" fill="var(--dino)"/><ellipse cx="60" cy="98" rx="18" ry="16" fill="#FFF1C1"/><ellipse cx="44" cy="118" rx="11" ry="6" fill="var(--dino2)"/><ellipse cx="76" cy="118" rx="11" ry="6" fill="var(--dino2)"/><ellipse class="arm" cx="31" cy="86" rx="6" ry="10" fill="var(--dino2)" transform="rotate(35 31 86)"/><ellipse cx="89" cy="86" rx="6" ry="10" fill="var(--dino2)" transform="rotate(-35 89 86)"/><circle cx="60" cy="52" r="35" fill="var(--dino)"/><g class="eo"><circle cx="46" cy="51" r="6.5" fill="#3B2A4A"/><circle cx="74" cy="51" r="6.5" fill="#3B2A4A"/><circle cx="48.5" cy="48" r="2.4" fill="#fff"/><circle cx="76.5" cy="48" r="2.4" fill="#fff"/></g><g class="eh" fill="none" stroke="#3B2A4A" stroke-width="4" stroke-linecap="round"><path d="M39 53 Q46 44 53 53"/><path d="M67 53 Q74 44 81 53"/></g><ellipse cx="36" cy="63" rx="6.5" ry="4" fill="#FF9EC0" opacity=".85"/><ellipse cx="84" cy="63" rx="6.5" ry="4" fill="#FF9EC0" opacity=".85"/><path class="ms" d="M53 62 Q60 69 67 62" fill="none" stroke="#3B2A4A" stroke-width="3.5" stroke-linecap="round"/><ellipse class="mo" cx="60" cy="65" rx="4" ry="4.5" fill="#3B2A4A"/></svg></div><div class="msg bubble" id="msg" aria-live="polite"></div></div>
     <div class="tools" id="puzzleTools">
       <button class="btn" id="bSpeak">🔊 Vorlesen</button>
       <button class="btn" id="bHint">💡 Tipp</button>
@@ -219,6 +260,7 @@ header h1{flex:1;margin:0;font-size:24px}
 </div>
 <div class="win" id="win" hidden>
   <div class="card">
+    <div class="dino win-d happy"><svg viewBox="0 0 120 124" aria-hidden="true"><path d="M82 96 Q112 100 116 74 Q104 90 82 84Z" fill="var(--dino2)"/><g fill="#FFA8C8"><path d="M36 30 L44 6 L54 26Z"/><path d="M52 24 L61 0 L70 24Z"/><path d="M67 26 L77 6 L85 30Z"/></g><ellipse cx="60" cy="92" rx="31" ry="27" fill="var(--dino)"/><ellipse cx="60" cy="98" rx="18" ry="16" fill="#FFF1C1"/><ellipse cx="44" cy="118" rx="11" ry="6" fill="var(--dino2)"/><ellipse cx="76" cy="118" rx="11" ry="6" fill="var(--dino2)"/><ellipse class="arm" cx="31" cy="86" rx="6" ry="10" fill="var(--dino2)" transform="rotate(35 31 86)"/><ellipse cx="89" cy="86" rx="6" ry="10" fill="var(--dino2)" transform="rotate(-35 89 86)"/><circle cx="60" cy="52" r="35" fill="var(--dino)"/><g class="eo"><circle cx="46" cy="51" r="6.5" fill="#3B2A4A"/><circle cx="74" cy="51" r="6.5" fill="#3B2A4A"/><circle cx="48.5" cy="48" r="2.4" fill="#fff"/><circle cx="76.5" cy="48" r="2.4" fill="#fff"/></g><g class="eh" fill="none" stroke="#3B2A4A" stroke-width="4" stroke-linecap="round"><path d="M39 53 Q46 44 53 53"/><path d="M67 53 Q74 44 81 53"/></g><ellipse cx="36" cy="63" rx="6.5" ry="4" fill="#FF9EC0" opacity=".85"/><ellipse cx="84" cy="63" rx="6.5" ry="4" fill="#FF9EC0" opacity=".85"/><path class="ms" d="M53 62 Q60 69 67 62" fill="none" stroke="#3B2A4A" stroke-width="3.5" stroke-linecap="round"/><ellipse class="mo" cx="60" cy="65" rx="4" ry="4.5" fill="#3B2A4A"/></svg></div>
     <div class="big" id="winStars">★★★</div>
     <h2 id="winTitle">Schachmatt!</h2>
     <p id="winText"></p>
@@ -270,6 +312,60 @@ function unlockSpeech() {
   try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u) } catch (e) {}
 }
 ['pointerup', 'touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, unlockSpeech, { capture: true }));
+// ---------- Party: Applaus, Tusch und Konfetti ----------
+let ac = null;
+function unlockAudio() {
+  try { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume();
+    const b = ac.createBuffer(1, 1, 22050), s = ac.createBufferSource(); s.buffer = b; s.connect(ac.destination); s.start(0) } catch (e) {}
+}
+['pointerup', 'touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, unlockAudio, { capture: true }));
+function tusch(t0, out) {
+  [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => {
+    const o = ac.createOscillator(), g = ac.createGain(), t = t0 + i * 0.11;
+    o.type = 'triangle'; o.frequency.value = f; o.connect(g); g.connect(out);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.35, t + .02); g.gain.exponentialRampToValueAtTime(.001, t + (i === 4 ? .9 : .35));
+    o.start(t); o.stop(t + 1);
+  });
+}
+function applaus(t0, out, dauer) {
+  const len = Math.floor(ac.sampleRate * .03), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+  for (let t = 0; t < dauer; t += 0.012 + Math.random() * 0.02) {
+    const dichte = Math.sin(Math.PI * Math.min(1, t / dauer)) ** .5; if (Math.random() > dichte) continue;
+    const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    src.buffer = buf; f.type = 'bandpass'; f.frequency.value = 900 + Math.random() * 1600; f.Q.value = 1.2;
+    g.gain.value = (.25 + Math.random() * .5) * dichte;
+    src.playbackRate.value = .8 + Math.random() * .5; src.connect(f); f.connect(g); g.connect(out); src.start(t0 + t);
+  }
+}
+function konfetti(n) {
+  const box = document.createElement('div'); box.className = 'konfetti';
+  const DINGE = ['💖', '⭐', '🌸', '🦕', '✨', '🎀', '🍭', '🌈', '💜', '🦖', '🎉', '🌟'];
+  const FARBEN = ['#FF9EC0', '#FFD66B', '#7ED9A0', '#A78BFA', '#5EB8F2', '#FFB38A'];
+  for (let i = 0; i < n; i++) {
+    const e = document.createElement('i');
+    if (i % 3) { e.textContent = DINGE[i % DINGE.length]; e.style.fontSize = (18 + Math.random() * 22) + 'px' }
+    else { e.className = 'pt'; e.style.background = FARBEN[i % FARBEN.length] }
+    e.style.left = Math.random() * 100 + 'vw';
+    e.style.setProperty('--dx', (Math.random() * 30 - 15) + 'vw');
+    e.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg');
+    e.style.animationDuration = (2.2 + Math.random() * 2) + 's';
+    e.style.animationDelay = (Math.random() * .8) + 's';
+    box.appendChild(e);
+  }
+  document.body.appendChild(box); setTimeout(() => box.remove(), 5500);
+}
+// gross = Schachmatt (Applaus + viel Konfetti), sonst kleine Feier
+function party(gross) {
+  konfetti(gross ? 90 : 40);
+  document.querySelectorAll('.dino').forEach(d => { d.classList.remove('happy', 'think', 'dance'); void d.offsetWidth; d.classList.add('dance') });
+  setTimeout(() => document.querySelectorAll('.dino.dance').forEach(d => d.classList.remove('dance')), 4000);
+  try {
+    if (!ac) unlockAudio(); if (!ac) return;
+    const out = ac.createGain(); out.gain.value = .55; out.connect(ac.destination);
+    const t0 = ac.currentTime + .05; tusch(t0, out); if (gross) applaus(t0 + .4, out, 3.2);
+  } catch (e) {}
+}
 function hush() { try { speechSynthesis.cancel() } catch (e) {} }
 
 // ---------- Figuren ----------
@@ -406,7 +502,12 @@ $('board').addEventListener('pointerup', endDrag);
 $('board').addEventListener('pointercancel', e => { if (drag) { drag.ghost?.remove(); drag = null; renderBoard() } });
 
 function onMove(mv) { if (mode === 'ai') aiPlayerMove(mv); else if (mode === 'local' || mode === 'online') friendMove(mv, true); else tryMove(mv) }
-function setMsg(t, cls) { const m = $('msg'); m.textContent = t; m.className = 'msg ' + (cls || '') }
+function setMsg(t, cls) {
+  const m = $('msg'); m.textContent = t; m.className = 'msg bubble ' + (cls || '');
+  const d = $('dPlay'); d.classList.remove('happy', 'think');
+  void d.offsetWidth; // Animation neu starten
+  if (cls === 'good') d.classList.add('happy'); else if (cls === 'oops' || cls === 'bad') d.classList.add('think');
+}
 
 // ---------- Rätsel ----------
 let cur = 0, step = 0, fails = 0, hints = 0;
@@ -434,6 +535,7 @@ function setTurnText() {
 // Tipp-Stufen: 1 = nur Worte, 2 = Figur leuchtet, 3 = Zielfeld + Pfeil + genaue Ansage
 // Von selbst kommt Hilfe erst nach vielen falschen Zügen.
 const AUTO_HILFE = 30;
+const OOPS = ['Hmm … probier nochmal! 🦕', 'Fast! Versuch es nochmal 💚', 'Dino denkt mit … nochmal! 🤔', 'Noch ein Versuch! ✨'];
 function solutionMove() { const c = new Chess(game.fen()); return c.move(AUFGABEN[cur].loesung[step]) }
 function showHint(lvl, quiet) {
   const a = AUFGABEN[cur], m = solutionMove();
@@ -443,7 +545,7 @@ function showHint(lvl, quiet) {
   else if (hint.lvl === 2) { const t = `Nimm ${DEN[m.piece]}! Wohin soll die Figur ziehen?`; setMsg('💡 ' + t, ''); say(t) }
   else {
     const t = `Zieh ${DEN[m.piece]} von ${m.from} nach ${m.to}.`;
-    setMsg((quiet ? 'Nein. ' : '') + '👉 ' + t + ' Folge dem blauen Pfeil!', ''); if (!quiet) say(t);
+    setMsg('👉 ' + t + ' Folge dem blauen Pfeil!', ''); if (!quiet) say(t);
   }
 }
 $('bHint').onclick = () => {
@@ -459,9 +561,8 @@ function tryMove(mv) {
   if (!ok) {
     game.undo(); fails++; sel = null; renderBoard();
     document.querySelector(`[data-sq="${mv.to}"]`)?.classList.add('shake');
-    say('Nein.');
     if (fails >= AUTO_HILFE) { showHint(3, true); return }
-    setMsg('Nein. Probier nochmal!', 'bad');
+    setMsg(OOPS[fails % OOPS.length], 'oops');
     return;
   }
   sel = null; hint = null; lastMove = [res.from, res.to]; step++; renderBoard();
@@ -483,10 +584,10 @@ function finish() {
   showStars();
   const matt = game.isCheckmate();
   const text = a.ende || (matt ? 'Du hast den König gefangen.' : 'Du hast eine Figur gewonnen.');
-  $('winStars').innerHTML = starHTML(stars);
+  $('winStars').innerHTML = [0, 1, 2].map(i => i < stars ? '<span class="on">★</span>' : '<span style="color:var(--line)">★</span>').join('');
   $('winTitle').textContent = matt ? 'Schachmatt! 🎉' : 'Geschafft! 🎉';
   $('winText').textContent = text;
-  setMsg(matt ? 'Schachmatt!' : 'Geschafft!', 'good');
+  setMsg(matt ? 'Schachmatt!' : 'Geschafft!', 'good'); party(matt);
   say((matt ? 'Schachmatt! ' : 'Geschafft! ') + text);
   const next = AUFGABEN.findIndex((x, i) => i > cur && x.k === a.k);
   $('winNext').hidden = next < 0; $('winNext').dataset.next = next;
@@ -557,7 +658,7 @@ function gameOver() {
     if (iWon) { const w = store.get('aiWins', {}); w[aiLvlCur] = (w[aiLvlCur] || 0) + 1; store.set('aiWins', w) } }
   else if (game.isStalemate()) t = 'Patt! Unentschieden.';
   else t = 'Unentschieden.';
-  $('tTurn').textContent = 'Partie vorbei.'; setMsg(t, cls); say(t.replace(/🎉/g, ''));
+  $('tTurn').textContent = 'Partie vorbei.'; setMsg(t, cls); if (cls === 'good') party(true); say(t.replace(/🎉/g, ''));
   store.set('aiGame', null);
 }
 function saveAI() { if (mode === 'ai' && !game.isGameOver()) store.set('aiGame', { me, level: aiLvlCur, pgn: game.pgn() }) }
@@ -610,7 +711,7 @@ function friendStatus(extra) {
       const winner = turn === 'w' ? 'b' : 'w';
       t = mode === 'online' ? (winner === me ? 'Schachmatt! Du hast gewonnen! 🎉' : 'Schachmatt. Dein Freund hat gewonnen.') : `Schachmatt! ${FARBE[winner]} hat gewonnen! 🎉`;
     } else t = game.isStalemate() ? 'Patt! Unentschieden.' : 'Unentschieden.';
-    $('tTurn').textContent = 'Partie vorbei.'; setMsg(t, /Freund hat gewonnen/.test(t) ? 'bad' : 'good'); say(t.replace('🎉', '')); return;
+    $('tTurn').textContent = 'Partie vorbei.'; setMsg(t, /Freund hat gewonnen/.test(t) ? 'bad' : 'good'); if (/🎉/.test(t)) party(true); say(t.replace('🎉', '')); return;
   }
   if (mode === 'local') $('tTurn').textContent = `${FARBE[turn]} ist dran.`;
   else if (!(conn && conn.open)) $('tTurn').textContent = 'Keine Verbindung zu deinem Freund.';
@@ -711,6 +812,8 @@ $('shareBtn').onclick = async () => {
 
 // ---------- Farben ----------
 const PRESETS = [
+  { n: 'Kawaii', pw: '#ffffff', pb: '#8b5cf6', light: '#fff4fa', dark: '#ffb8d9' },
+  { n: 'Dino', pw: '#fff8dc', pb: '#2f9e6a', light: '#eafbf1', dark: '#9fe3bd' },
   { n: 'Klassisch', pw: '#ffffff', pb: '#1d2b53', light: '#f3e6c8', dark: '#b58863' },
   { n: 'Meer', pw: '#ffffff', pb: '#0b4f6c', light: '#d6f0fa', dark: '#4a9cc4' },
   { n: 'Wald', pw: '#fff8e1', pb: '#2e4a1f', light: '#e4f1d0', dark: '#6f9a4a' },
