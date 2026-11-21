@@ -14,7 +14,7 @@
 <style>
 :root{
   --bg:#EAF3E6;--paper:#fff;--ink:#1D2B53;--muted:#5F6B85;--line:#CCD8C4;
-  --light:#F3E6C8;--dark:#B58863;--sel:#F7D046;--last:rgb(155 199 0 / .45);--hint:#4C9BE8;
+  --light:#F3E6C8;--dark:#B58863;--pw:#ffffff;--pb:#1D2B53;--pws:#1D2B53;--pbs:transparent;--sel:#F7D046;--last:rgb(155 199 0 / .45);--hint:#4C9BE8;
   --good:#2E9E5B;--bad:#D9443B;--sun:#FFC93C;
   --piece-font:"Apple Symbols","Segoe UI Symbol","Noto Sans Symbols2","Noto Sans Symbols","DejaVu Sans",serif;
 }
@@ -63,8 +63,8 @@ header h1{flex:1;margin:0;font-size:24px}
 .sq.chk{background:radial-gradient(circle,#ff5b4f 0%,#e0302a 35%,transparent 75%),var(--light)}
 .sq.d.chk{background:radial-gradient(circle,#ff5b4f 0%,#e0302a 35%,transparent 75%),var(--dark)}
 .sq .p{position:relative;z-index:1;font-family:var(--piece-font);font-size:min(10vw,58px);line-height:1;transition:transform .15s}
-.sq .p.w{color:#fff;-webkit-text-stroke:1.4px #1D2B53;paint-order:stroke fill;text-shadow:0 2px 0 rgb(0 0 0 / .25)}
-.sq .p.b{color:#1D2B53;text-shadow:0 2px 0 rgb(0 0 0 / .2)}
+.sq .p.w{color:var(--pw);-webkit-text-stroke:1.4px var(--pws);paint-order:stroke fill;text-shadow:0 2px 0 rgb(0 0 0 / .25)}
+.sq .p.b{color:var(--pb);-webkit-text-stroke:1.4px var(--pbs);paint-order:stroke fill;text-shadow:0 2px 0 rgb(0 0 0 / .2)}
 .sq.selp .p{transform:scale(1.15)}
 .sq.tgt::before{content:"";position:absolute;width:30%;height:30%;border-radius:50%;background:rgb(29 43 83 / .28);z-index:2;pointer-events:none}
 .sq.tgt.cap::before{width:88%;height:88%;background:transparent;border:5px solid rgb(29 43 83 / .3)}
@@ -94,8 +94,8 @@ header h1{flex:1;margin:0;font-size:24px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .arrow{position:absolute;inset:0;pointer-events:none;z-index:3}
 .ghost{position:fixed;z-index:30;pointer-events:none;transform:translate(-50%,-60%) scale(1.25);font-family:var(--piece-font);line-height:1}
-.ghost.w{color:#fff;-webkit-text-stroke:1.4px #1D2B53;paint-order:stroke fill}
-.ghost.b{color:#1D2B53}
+.ghost.w{color:var(--pw);-webkit-text-stroke:1.4px var(--pws);paint-order:stroke fill}
+.ghost.b{color:var(--pb);-webkit-text-stroke:1.4px var(--pbs);paint-order:stroke fill}
 .sq.from .p{opacity:.35}
 .sq.hint2::after{content:"";position:absolute;inset:3px;border:4px dashed var(--hint);border-radius:50%;pointer-events:none;animation:pulse 1s infinite alternate}
 .kap.ai{background:linear-gradient(135deg,#FFF6D8,#fff);border:3px solid var(--sun)}
@@ -105,6 +105,21 @@ header h1{flex:1;margin:0;font-size:24px}
 .seg button{flex:1;min-width:90px;height:54px;border-radius:18px;background:var(--bg);font-weight:700;font-size:17px;border:3px solid transparent}
 .seg button[aria-pressed="true"]{border-color:var(--good);background:#E3F5EA}
 .moves{font-size:14px;color:var(--muted);text-align:center;min-height:1.4em;margin-top:6px;word-break:break-word}
+.code{font:800 44px/1 ui-monospace,Menlo,monospace;letter-spacing:8px;text-align:center;background:var(--bg);border-radius:16px;padding:14px 0;margin:6px 0 12px}
+.codein{width:100%;height:58px;border-radius:16px;border:3px solid var(--line);font:800 30px ui-monospace,Menlo,monospace;letter-spacing:6px;text-align:center;text-transform:uppercase;margin-bottom:10px;background:var(--paper);color:var(--ink)}
+.status{color:var(--muted);text-align:center;margin:8px 0 0;min-height:1.4em}
+.status.bad{color:var(--bad)}.status.good{color:var(--good)}
+.presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-bottom:16px}
+.preset{border-radius:16px;background:var(--bg);padding:8px;font-weight:700;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:6px;border:3px solid transparent}
+.preset[aria-pressed="true"]{border-color:var(--good)}
+.mini{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);width:100%;aspect-ratio:2;border-radius:8px;overflow:hidden}
+.preset .mini i{font-size:15px}
+.bigprev .mini i{font-size:clamp(22px,8vw,40px)}
+.mini i{display:flex;align-items:center;justify-content:center;font-style:normal;font-family:var(--piece-font);font-size:22px;paint-order:stroke fill;-webkit-text-stroke:1px var(--s,transparent)}
+.pick{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-weight:600}
+.pick:last-of-type{border-bottom:0}
+.pick input{width:64px;height:44px;border:0;border-radius:12px;padding:0;background:none}
+.bigprev{width:min(100%,280px);margin:0 auto 14px}
 </style>
 </head>
 <body>
@@ -114,6 +129,8 @@ header h1{flex:1;margin:0;font-size:24px}
     <header><h1>Schach-Abenteuer</h1><span class="stars" id="starsHome">0</span></header>
     <div class="hero"><div class="big">♞︎♛︎♚︎</div><p>Löse berühmte Schach-Rätsel aus Büchern und großen Partien – oder spiel gegen den Computer!</p></div>
     <button class="kap ai" id="goAI"><span class="ic">🤖</span><span><b>Gegen den Computer</b><small>Eine ganze Partie spielen</small></span></button>
+    <button class="kap" id="goFriend"><span class="ic">👫</span><span><b>Gegen einen Freund</b><small>Am selben Gerät oder online mit Code</small></span></button>
+    <button class="kap" id="goColors"><span class="ic">🎨</span><span><b>Farben</b><small>Figuren und Brett anmalen</small></span></button>
     <div id="kapList"></div>
     <div class="tools"><button class="btn" id="voiceBtn" hidden>🗣️ Stimme</button></div>
     <div class="foot">Schachregeln: chess.js (BSD-Lizenz) · Partien: pgnmentor.com und Wikipedia</div>
@@ -135,6 +152,44 @@ header h1{flex:1;margin:0;font-size:24px}
     </div>
     <button class="btn" id="aiResume" hidden style="width:100%">↩︎ Letzte Partie weiterspielen</button>
   </div>
+  <!-- Gegen einen Freund -->
+  <div id="vFriend" hidden>
+    <header><button class="back" id="friendBack" aria-label="Zurück">‹</button><h1>Gegen einen Freund</h1></header>
+    <div class="setup">
+      <h3>📱 Am selben Gerät</h3>
+      <p class="status" style="text-align:left;margin:0 0 12px">Ihr spielt abwechselnd auf diesem Handy oder Tablet.</p>
+      <button class="btn main" id="localStart" style="width:100%">Los geht's! ›</button>
+    </div>
+    <div class="setup">
+      <h3>🌍 Online auf zwei Geräten</h3>
+      <div id="hostBox">
+        <button class="btn main" id="hostBtn" style="width:100%">Spiel erstellen</button>
+      </div>
+      <div id="hostWait" hidden>
+        <p style="margin:0">Sag deinem Freund diesen Code:</p>
+        <div class="code" id="hostCode">-----</div>
+        <button class="btn" id="shareBtn" style="width:100%">📤 Link schicken</button>
+      </div>
+      <h3 style="margin-top:18px">Oder: Code von deinem Freund eingeben</h3>
+      <input class="codein" id="joinCode" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" aria-label="Code">
+      <button class="btn" id="joinBtn" style="width:100%">Beitreten ›</button>
+      <p class="status" id="netStatus" aria-live="polite"></p>
+    </div>
+  </div>
+  <!-- Farben -->
+  <div id="vColors" hidden>
+    <header><button class="back" id="colorsBack" aria-label="Zurück">‹</button><h1>Farben</h1></header>
+    <div class="setup">
+      <div class="bigprev"><div class="mini" id="bigPrev" style="aspect-ratio:2"></div></div>
+      <h3>Fertige Farben</h3>
+      <div class="presets" id="presets"></div>
+      <h3>Selbst aussuchen</h3>
+      <label class="pick">Figuren von Spieler 1 (Weiß) <input type="color" id="cPw"></label>
+      <label class="pick">Figuren von Spieler 2 (Schwarz) <input type="color" id="cPb"></label>
+      <label class="pick">Helle Felder <input type="color" id="cLight"></label>
+      <label class="pick">Dunkle Felder <input type="color" id="cDark"></label>
+    </div>
+  </div>
   <!-- Brett (Rätsel und Computer-Partie) -->
   <div id="vPlay" hidden>
     <header><button class="back" id="playBack" aria-label="Zurück">‹</button><h1 id="playNum"></h1><span class="stars" id="starsPlay">0</span></header>
@@ -153,6 +208,11 @@ header h1{flex:1;margin:0;font-size:24px}
       <button class="btn" id="aUndo">↶ Zug zurück</button>
       <button class="btn" id="aHint">💡 Tipp</button>
       <button class="btn" id="aNew">↺ Neue Partie</button>
+    </div>
+    <div class="tools" id="friendTools" hidden>
+      <button class="btn" id="fUndo">↶ Zug zurück</button>
+      <button class="btn" id="fFlip">🔄 Brett drehen</button>
+      <button class="btn" id="fNew">↺ Neue Partie</button>
     </div>
     <div class="moves" id="moveList"></div>
   </div>
@@ -220,7 +280,7 @@ const FILES = 'abcdefgh';
 const clean = s => s.replace(/[+#!?]/g, '');
 
 // ---------- Ansichten ----------
-function view(v) { ['vHome', 'vKap', 'vSetup', 'vPlay'].forEach(id => $(id).hidden = id !== v); window.scrollTo(0, 0); showStars() }
+function view(v) { ['vHome', 'vKap', 'vSetup', 'vFriend', 'vColors', 'vPlay'].forEach(id => $(id).hidden = id !== v); window.scrollTo(0, 0); showStars() }
 function kapItems(kid) { return AUFGABEN.map((a, i) => ({ a, i })).filter(x => x.a.k === kid) }
 function starHTML(n) { return '★'.repeat(n) + '<i>' + '★'.repeat(3 - n) + '</i>' }
 
@@ -248,7 +308,7 @@ function openKap(kid) {
 }
 $('kapBack').onclick = renderHome;
 $('setupBack').onclick = renderHome;
-$('playBack').onclick = () => { hush(); if (mode === 'ai') { saveAI(); openSetup() } else openKap(curKap || AUFGABEN[cur].k) };
+$('playBack').onclick = () => { hush(); if (mode === 'ai') { saveAI(); openSetup() } else if (mode === 'local' || mode === 'online') { leaveFriend(); openFriend() } else openKap(curKap || AUFGABEN[cur].k) };
 
 // ---------- gemeinsamer Brett-Zustand ----------
 let mode = null;          // 'puzzle' | 'ai'
@@ -257,7 +317,7 @@ let hint = null;          // {from, to, lvl}
 
 function renderBoard() {
   const B = $('board'); B.innerHTML = '';
-  const flip = me === 'b', tg = sel ? game.moves({ square: sel, verbose: true }) : [];
+  const flip = boardFlip(), tg = sel ? game.moves({ square: sel, verbose: true }) : [];
   const kingChk = game.inCheck() ? findKing(game.turn()) : null;
   for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
     const file = flip ? 7 - f : f, rank = flip ? r + 1 : 8 - r, sq = FILES[file] + rank;
@@ -279,7 +339,7 @@ function renderBoard() {
   if (hint && hint.lvl >= 3) drawArrow(hint.from, hint.to);
 }
 function sqCenter(sq) {
-  const flip = me === 'b', f = FILES.indexOf(sq[0]), r = +sq[1];
+  const flip = boardFlip(), f = FILES.indexOf(sq[0]), r = +sq[1];
   const x = flip ? 7 - f : f, y = flip ? r - 1 : 8 - r;
   return [(x + .5) * 12.5, (y + .5) * 12.5];
 }
@@ -292,7 +352,10 @@ function drawArrow(a, b) {
     <line x1="${x1}" y1="${y1}" x2="${ex}" y2="${ey}" stroke="#4C9BE8" stroke-opacity=".85" stroke-width="2.6" stroke-linecap="round" marker-end="url(#ah)"/></svg>`);
 }
 function findKing(c) { for (const row of game.board()) for (const p of row) if (p && p.type === 'k' && p.color === c) return p.square; return null }
-function canPlay() { return !busy && !over && game.turn() === me }
+function myColor() { return mode === 'local' ? game.turn() : me }
+let localFlip = false;
+function boardFlip() { return mode === 'local' ? localFlip : me === 'b' }
+function canPlay() { if (mode === 'online' && !(conn && conn.open)) return false; return !busy && !over && game.turn() === myColor() }
 
 function tap(sq) {
   if (!canPlay()) return;
@@ -301,7 +364,7 @@ function tap(sq) {
     const mv = game.moves({ square: sel, verbose: true }).find(m => m.to === sq);
     if (mv) { onMove(mv); return }
   }
-  if (p && p.color === me) { sel = sel === sq ? null : sq; renderBoard(); return }
+  if (p && p.color === myColor()) { sel = sel === sq ? null : sq; renderBoard(); return }
   if (sel) { sel = null; renderBoard() }
 }
 
@@ -312,7 +375,7 @@ $('board').addEventListener('pointerdown', e => {
   const sq = sqAt(e.clientX, e.clientY); if (!sq || !canPlay()) return;
   const p = game.get(sq);
   // Leeres/gegnerisches Feld: erst beim Loslassen ziehen (sonst blockiert Safari den Ton)
-  if (!(p && p.color === me)) { drag = { tapOnly: sq, id: e.pointerId }; return }
+  if (!(p && p.color === myColor())) { drag = { tapOnly: sq, id: e.pointerId }; return }
   const wasSel = sel === sq; sel = sq; renderBoard();
   drag = { from: sq, x: e.clientX, y: e.clientY, moved: false, wasSel, ghost: null, id: e.pointerId };
   try { $('board').setPointerCapture(e.pointerId) } catch (er) {}
@@ -342,7 +405,7 @@ function endDrag(e) {
 $('board').addEventListener('pointerup', endDrag);
 $('board').addEventListener('pointercancel', e => { if (drag) { drag.ghost?.remove(); drag = null; renderBoard() } });
 
-function onMove(mv) { if (mode === 'ai') aiPlayerMove(mv); else tryMove(mv) }
+function onMove(mv) { if (mode === 'ai') aiPlayerMove(mv); else if (mode === 'local' || mode === 'online') friendMove(mv, true); else tryMove(mv) }
 function setMsg(t, cls) { const m = $('msg'); m.textContent = t; m.className = 'msg ' + (cls || '') }
 
 // ---------- Rätsel ----------
@@ -357,8 +420,8 @@ function openPuzzle(i) {
   const n = kapItems(a.k).findIndex(x => x.i === i) + 1;
   $('playNum').textContent = 'Rätsel ' + n + ' von ' + kapItems(a.k).length;
   $('tTitle').textContent = a.titel; $('tText').textContent = a.text; $('tText').hidden = false;
-  $('tDot').style.background = me === 'w' ? '#fff' : '#1D2B53';
-  $('puzzleTools').hidden = false; $('aiTools').hidden = true; $('moveList').textContent = '';
+  $('tDot').style.background = me === 'w' ? 'var(--pw)' : 'var(--pb)';
+  $('puzzleTools').hidden = false; $('aiTools').hidden = true; $('friendTools').hidden = true; $('moveList').textContent = '';
   setTurnText(); setMsg('', ''); $('bHint').classList.remove('glow');
   renderBoard(); view('vPlay');
 }
@@ -451,8 +514,8 @@ function startAI(color, level, pgn) {
   const h = game.history({ verbose: true }); lastMove = h.length ? [h[h.length - 1].from, h[h.length - 1].to] : null;
   $('playNum').textContent = 'Computer: ' + LVLNAME[level];
   $('tTitle').textContent = 'Partie gegen den Computer'; $('tText').hidden = true;
-  $('tDot').style.background = me === 'w' ? '#fff' : '#1D2B53';
-  $('puzzleTools').hidden = true; $('aiTools').hidden = false;
+  $('tDot').style.background = me === 'w' ? 'var(--pw)' : 'var(--pb)';
+  $('puzzleTools').hidden = true; $('aiTools').hidden = false; $('friendTools').hidden = true;
   view('vPlay'); aiStatus(); renderBoard(); saveAI();
   if (game.turn() !== me && !game.isGameOver()) aiThink();
 }
@@ -517,6 +580,179 @@ $('aHint').onclick = () => {
     const t = `Ein guter Zug: ${DEN[m.piece]} von ${m.from} nach ${m.to}.`; setMsg('💡 ' + t, ''); say(t);
   }, 30);
 };
+
+// ---------- Gegen einen Freund ----------
+const FARBE = { w: 'Weiß', b: 'Schwarz' };
+let peer = null, conn = null, isHost = false, hostCode = null;
+function openFriend() { mode = null; netStatus(''); $('hostBox').hidden = !!(peer && isHost); $('hostWait').hidden = !(peer && isHost); view('vFriend') }
+$('goFriend').onclick = openFriend;
+$('friendBack').onclick = () => { leaveFriend(); renderHome() };
+function netStatus(t, cls) { const e = $('netStatus'); e.textContent = t; e.className = 'status ' + (cls || '') }
+
+function startFriendGame(kind, color) {
+  mode = kind; me = color || 'w'; game = new Chess(); sel = null; busy = false; over = false; hint = null; lastMove = null;
+  $('playNum').textContent = kind === 'local' ? 'Zu zweit' : 'Online';
+  $('tTitle').textContent = kind === 'local' ? 'Partie zu zweit' : 'Partie gegen deinen Freund';
+  $('tText').hidden = true;
+  $('puzzleTools').hidden = true; $('aiTools').hidden = true; $('friendTools').hidden = false;
+  $('fFlip').hidden = kind !== 'local'; $('fUndo').hidden = kind !== 'local';
+  view('vPlay'); renderBoard(); friendStatus();
+}
+$('localStart').onclick = () => { localFlip = false; startFriendGame('local', 'w') };
+
+function friendStatus(extra) {
+  const turn = game.turn();
+  $('tDot').style.background = turn === 'w' ? 'var(--pw)' : 'var(--pb)';
+  $('moveList').textContent = moveListText();
+  if (game.isGameOver()) {
+    over = true; let t;
+    if (game.isCheckmate()) {
+      const winner = turn === 'w' ? 'b' : 'w';
+      t = mode === 'online' ? (winner === me ? 'Schachmatt! Du hast gewonnen! 🎉' : 'Schachmatt. Dein Freund hat gewonnen.') : `Schachmatt! ${FARBE[winner]} hat gewonnen! 🎉`;
+    } else t = game.isStalemate() ? 'Patt! Unentschieden.' : 'Unentschieden.';
+    $('tTurn').textContent = 'Partie vorbei.'; setMsg(t, /Freund hat gewonnen/.test(t) ? 'bad' : 'good'); say(t.replace('🎉', '')); return;
+  }
+  if (mode === 'local') $('tTurn').textContent = `${FARBE[turn]} ist dran.`;
+  else if (!(conn && conn.open)) $('tTurn').textContent = 'Keine Verbindung zu deinem Freund.';
+  else $('tTurn').textContent = `Du spielst ${FARBE[me]}. ` + (turn === me ? 'Du bist dran!' : 'Dein Freund ist dran …');
+  if (extra) setMsg(extra[0], extra[1]);
+  else setMsg(game.inCheck() ? 'Schach!' : '', game.inCheck() ? 'bad' : '');
+}
+
+function friendMove(mv, mine) {
+  const res = game.move({ from: mv.from, to: mv.to, promotion: mv.promotion || 'q' });
+  if (!res) return;
+  sel = null; lastMove = [res.from, res.to]; renderBoard();
+  if (mode === 'online' && mine && conn && conn.open) conn.send({ t: 'move', from: res.from, to: res.to, promotion: res.promotion, ply: game.history().length });
+  if (game.inCheck() && !game.isGameOver()) say('Schach!');
+  friendStatus(res.captured && !game.inCheck() ? [`${FARBE[res.color]} hat ${DEN[res.captured]} geschlagen.`, ''] : null);
+}
+$('fUndo').onclick = () => { if (mode !== 'local' || !game.history().length) return; game.undo(); over = false; const h = game.history({ verbose: true }); lastMove = h.length ? [h[h.length - 1].from, h[h.length - 1].to] : null; sel = null; renderBoard(); friendStatus(['Zug zurückgenommen.', '']) };
+$('fFlip').onclick = () => { localFlip = !localFlip; renderBoard() };
+$('fNew').onclick = () => {
+  if (mode === 'local') { startFriendGame('local', 'w'); return }
+  if (mode === 'online' && conn && conn.open) { const next = me === 'w' ? 'b' : 'w'; conn.send({ t: 'new', you: next === 'w' ? 'b' : 'w' }); startFriendGame('online', next); setMsg('Neue Partie! Ihr habt die Farben getauscht.', '') }
+};
+
+// --- Online: Verbindung über PeerJS (Verbindungsaufbau über den öffentlichen PeerJS-Dienst, Züge direkt zwischen den Geräten)
+const PREFIX = 'schach-abenteuer-v1-';
+const CODECHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function newCode() { let c = ''; for (let i = 0; i < 5; i++) c += CODECHARS[Math.floor(Math.random() * CODECHARS.length)]; return c }
+let peerLib = null;
+function loadPeer() {
+  if (peerLib) return peerLib;
+  peerLib = new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';
+    s.onload = () => res(window.Peer); s.onerror = () => { peerLib = null; rej(new Error('Laden fehlgeschlagen')) }; document.head.appendChild(s);
+  });
+  return peerLib;
+}
+function leaveFriend() {
+  try { if (conn && conn.open) conn.send({ t: 'bye' }) } catch (e) {}
+  try { conn && conn.close() } catch (e) {}
+  try { peer && peer.destroy() } catch (e) {}
+  conn = null; peer = null; isHost = false; hostCode = null;
+  if (mode === 'online' || mode === 'local') mode = null;
+}
+function wire(c) {
+  conn = c;
+  c.on('data', d => {
+    if (!d || typeof d !== 'object') return;
+    if (d.t === 'start' || d.t === 'new') { startFriendGame('online', d.you === 'b' ? 'b' : 'w'); say('Los geht\'s!'); }
+    else if (d.t === 'move' && mode === 'online') {
+      if (d.ply !== game.history().length + 1) return;
+      const ok = game.moves({ square: d.from, verbose: true }).find(m => m.to === d.to);
+      if (ok) friendMove({ from: d.from, to: d.to, promotion: d.promotion }, false);
+    } else if (d.t === 'bye') { if (mode === 'online') { setMsg('Dein Freund hat das Spiel verlassen.', 'bad'); $('tTurn').textContent = 'Keine Verbindung zu deinem Freund.' } }
+  });
+  c.on('close', () => { if (mode === 'online' && !over) { setMsg('Die Verbindung ist weg.', 'bad'); $('tTurn').textContent = 'Keine Verbindung zu deinem Freund.' } });
+}
+async function hostGame() {
+  netStatus('Verbinde …');
+  let Peer; try { Peer = await loadPeer() } catch (e) { netStatus('Keine Internetverbindung?', 'bad'); return }
+  leaveFriend(); isHost = true; hostCode = newCode();
+  peer = new Peer(PREFIX + hostCode);
+  peer.on('open', () => {
+    $('hostBox').hidden = true; $('hostWait').hidden = false; $('hostCode').textContent = hostCode;
+    netStatus('Warte auf deinen Freund …');
+  });
+  peer.on('connection', c => {
+    if (conn && conn.open) { c.on('open', () => c.close()); return }
+    wire(c);
+    c.on('open', () => { const hostColor = Math.random() < .5 ? 'w' : 'b'; c.send({ t: 'start', you: hostColor === 'w' ? 'b' : 'w' }); startFriendGame('online', hostColor); say('Dein Freund ist da! Los geht\'s!') });
+  });
+  peer.on('error', err => {
+    if (err.type === 'unavailable-id') { hostGame(); return }
+    netStatus('Verbindung klappt nicht (' + err.type + '). Probier es nochmal.', 'bad');
+  });
+}
+async function joinGame(code) {
+  code = (code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length !== 5) { netStatus('Der Code hat 5 Zeichen.', 'bad'); return }
+  netStatus('Verbinde …');
+  let Peer; try { Peer = await loadPeer() } catch (e) { netStatus('Keine Internetverbindung?', 'bad'); return }
+  leaveFriend(); isHost = false;
+  peer = new Peer();
+  peer.on('open', () => {
+    const c = peer.connect(PREFIX + code, { reliable: true }); wire(c);
+    setTimeout(() => { if (!(conn && conn.open) && mode !== 'online') netStatus('Keine Antwort. Stimmt der Code? Ist das Spiel bei deinem Freund noch offen?', 'bad') }, 12000);
+  });
+  peer.on('error', err => netStatus(err.type === 'peer-unavailable' ? 'Diesen Code gibt es nicht. Schau nochmal nach!' : 'Verbindung klappt nicht (' + err.type + ').', 'bad'));
+}
+$('hostBtn').onclick = hostGame;
+$('joinBtn').onclick = () => joinGame($('joinCode').value);
+$('joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinGame($('joinCode').value) });
+$('shareBtn').onclick = async () => {
+  const url = location.origin + location.pathname + '?spiel=' + hostCode;
+  const text = 'Spiel Schach mit mir! Code: ' + hostCode;
+  try { if (navigator.share) { await navigator.share({ title: 'Schach-Abenteuer', text, url }); return } } catch (e) { return }
+  try { await navigator.clipboard.writeText(text + ' ' + url); netStatus('Link kopiert! Schick ihn deinem Freund.', 'good') } catch (e) { netStatus(url, '') }
+};
+
+// ---------- Farben ----------
+const PRESETS = [
+  { n: 'Klassisch', pw: '#ffffff', pb: '#1d2b53', light: '#f3e6c8', dark: '#b58863' },
+  { n: 'Meer', pw: '#ffffff', pb: '#0b4f6c', light: '#d6f0fa', dark: '#4a9cc4' },
+  { n: 'Wald', pw: '#fff8e1', pb: '#2e4a1f', light: '#e4f1d0', dark: '#6f9a4a' },
+  { n: 'Bonbon', pw: '#ffd1ec', pb: '#7b2cbf', light: '#fff0f8', dark: '#f59fc9' },
+  { n: 'Feuer & Eis', pw: '#e63946', pb: '#1d70e8', light: '#f1f5f9', dark: '#94a3b8' },
+  { n: 'Gold & Silber', pw: '#f5c542', pb: '#a8b3bd', light: '#3b3b4f', dark: '#22222e' },
+  { n: 'Regenbogen', pw: '#ff8c00', pb: '#8e24aa', light: '#fff59d', dark: '#4dd0e1' },
+  { n: 'Nacht', pw: '#fefefe', pb: '#ffb703', light: '#3d5a80', dark: '#1d2b45' },
+];
+let colors = Object.assign({}, PRESETS[0], store.get('colors', {}));
+function lum(hex) { const n = parseInt(hex.slice(1), 16), r = (n >> 16) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255; return .2126 * r + .7152 * g + .0722 * b }
+function stroke(fill) { return lum(fill) > .45 ? '#1D2B53' : 'rgba(255,255,255,.75)' }
+function applyColors() {
+  const r = document.documentElement.style;
+  r.setProperty('--pw', colors.pw); r.setProperty('--pb', colors.pb);
+  r.setProperty('--pws', stroke(colors.pw)); r.setProperty('--pbs', lum(colors.pb) > .45 ? '#1D2B53' : 'transparent');
+  r.setProperty('--light', colors.light); r.setProperty('--dark', colors.dark);
+}
+function miniHTML(c) {
+  const sq = (i, g, col) => `<i style="background:${i % 2 ? c.dark : c.light};color:${col};--s:${col === c.pw ? stroke(c.pw) : (lum(c.pb) > .45 ? '#1D2B53' : 'transparent')}">${g}&#xFE0E;</i>`;
+  return sq(0, '♚', c.pb) + sq(1, '♛', c.pb) + sq(2, '♞', c.pb) + sq(3, '♟', c.pb) + sq(5, '♟', c.pw) + sq(4, '♞', c.pw) + sq(5, '♛', c.pw) + sq(4, '♚', c.pw);
+}
+function renderColors() {
+  $('bigPrev').innerHTML = miniHTML(colors);
+  $('presets').innerHTML = '';
+  PRESETS.forEach(pr => {
+    const b = document.createElement('button'); b.className = 'preset';
+    const same = ['pw', 'pb', 'light', 'dark'].every(k => pr[k] === colors[k]); b.setAttribute('aria-pressed', same);
+    b.innerHTML = `<span class="mini">${miniHTML(pr)}</span>${pr.n}`;
+    b.onclick = () => { colors = Object.assign({}, pr); saveColors() };
+    $('presets').appendChild(b);
+  });
+  $('cPw').value = colors.pw; $('cPb').value = colors.pb; $('cLight').value = colors.light; $('cDark').value = colors.dark;
+}
+function saveColors() { store.set('colors', colors); applyColors(); renderColors() }
+[['cPw', 'pw'], ['cPb', 'pb'], ['cLight', 'light'], ['cDark', 'dark']].forEach(([id, k]) => $(id).addEventListener('input', e => { colors[k] = e.target.value; store.set('colors', colors); applyColors(); $('bigPrev').innerHTML = miniHTML(colors) }));
+$('goColors').onclick = () => { renderColors(); view('vColors') };
+$('colorsBack').onclick = renderHome;
+applyColors();
+
+// Link mit ?spiel=CODE öffnet direkt das Beitreten
+{ const code = new URLSearchParams(location.search).get('spiel'); if (code) { history.replaceState(null, '', location.pathname); setTimeout(() => { openFriend(); $('joinCode').value = code.toUpperCase(); joinGame(code) }, 50) } }
 
 $('voiceBtn').onclick = nextVoice;
 renderHome();
