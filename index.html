@@ -128,6 +128,7 @@ header h1{font-weight:800;letter-spacing:.3px}
 .win p{color:var(--muted);margin:0 0 18px}
 .win .tools{flex-direction:column}
 @keyframes pop{from{transform:scale(.7);opacity:0}}
+.buchHead{margin:22px 4px 12px;text-align:center}.buchHead b{display:block;font-size:22px}.buchHead small{color:var(--muted)}
 .foot{margin-top:28px;color:var(--muted);font-size:13px;text-align:center}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .arrow{position:absolute;inset:0;pointer-events:none;z-index:3}
@@ -174,7 +175,7 @@ header h1{font-weight:800;letter-spacing:.3px}
     <button class="kap" id="goColors"><span class="ic">🎨</span><span><b>Farben</b><small>Figuren und Brett anmalen</small></span></button>
     <div id="kapList"></div>
     <div class="tools"><button class="btn" id="voiceBtn" hidden>🗣️ Stimme</button></div>
-    <div class="foot">Schachregeln: chess.js (BSD-Lizenz) · Partien: pgnmentor.com und Wikipedia</div>
+    <div class="foot">Schachregeln: chess.js (BSD-Lizenz) · Partien: pgnmentor.com und Wikipedia · Buch-Stellungen: S. D. Iwaschtschenko (1988), mit Stockfish geprüft</div>
   </div>
   <!-- Kapitel -->
   <div id="vKap" hidden>
@@ -270,7 +271,9 @@ header h1{font-weight:800;letter-spacing:.3px}
 
 <script type="module">
 import { Chess } from './vendor/chess.js';
-import { KAPITEL, AUFGABEN } from './puzzles.js';
+import { KAPITEL as K0, AUFGABEN as A0 } from './puzzles.js';
+import { BUCH_KAPITEL, BUCH_AUFGABEN } from './buch.js';
+const KAPITEL = [...K0, ...BUCH_KAPITEL], AUFGABEN = [...A0, ...BUCH_AUFGABEN];
 import { bestMove } from './engine.js';
 
 const $ = id => document.getElementById(id);
@@ -385,6 +388,7 @@ function renderHome() {
   KAPITEL.forEach(k => {
     const items = kapItems(k.id), done = items.filter(x => best[x.i]).length;
     if (!items.length) return;
+    if (k.buch && !$('kapList').querySelector('.buchHead')) { const h = document.createElement('div'); h.className = 'buchHead'; h.innerHTML = '<b>📚 Aus dem Schachbuch</b><small>Iwaschtschenko: Sammlung von Schachkombinationen</small>'; $('kapList').appendChild(h) }
     const b = document.createElement('button'); b.className = 'kap';
     b.innerHTML = `<span class="ic">${k.icon}</span><span><b>${k.name}</b><small>${items.length} Rätsel</small></span><span class="pr">${done} / ${items.length} ✓</span>`;
     b.onclick = () => openKap(k.id); $('kapList').appendChild(b);
@@ -556,7 +560,9 @@ $('bHint').onclick = () => {
 
 function tryMove(mv) {
   const a = AUFGABEN[cur], want = a.loesung[step];
-  const res = game.move({ from: mv.from, to: mv.to, promotion: 'q' });
+  // Umwandlung: wenn die Lösung genau hier z. B. einen Springer will, nimm den
+  let promo = 'q'; try { const w = new Chess(game.fen()).move(want); if (w.from === mv.from && w.to === mv.to && w.promotion) promo = w.promotion } catch (e) {}
+  const res = game.move({ from: mv.from, to: mv.to, promotion: promo });
   const ok = clean(res.san) === clean(want) || (a.ziel === 'matt' && game.isCheckmate());
   if (!ok) {
     game.undo(); fails++; sel = null; renderBoard();
