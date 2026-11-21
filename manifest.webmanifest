@@ -1,0 +1,9 @@
+{
+  "name": "Schach-Abenteuer",
+  "short_name": "Schach",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#EAF3E6",
+  "theme_color": "#EAF3E6",
+  "icons": [{ "src": "icon.png", "sizes": "512x512", "type": "image/png" }]
+}
