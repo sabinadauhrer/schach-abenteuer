@@ -25,61 +25,90 @@ function evaluate(c) {
   return c.turn() === 'w' ? s : -s;
 }
 
-function order(moves) {
-  return moves.sort((a, b) => score(b) - score(a));
-  function score(m) { return (m.captured ? 10 * V[m.captured] - V[m.piece] : 0) + (m.promotion ? 800 : 0) + (m.san.includes('+') ? 50 : 0) }
-}
+// Für die Suche nutzen wir die schnellen internen Funktionen von chess.js (_moves/_makeMove/_undoMove).
+// Die normalen moves({verbose:true}) sind etwa 40-mal langsamer und machten den starken Computer sehr träge.
+function score(m) { return (m.captured ? 10 * V[m.captured] - V[m.piece] : 0) + (m.promotion ? 800 : 0) }
+function order(moves) { return moves.sort((a, b) => score(b) - score(a)) }
 
-let nodes = 0;
+let nodes = 0, deadline = Infinity;
+export let reached = 0;
+class Zeit extends Error {}
+const MATE = 100000;
+function tick() { if ((++nodes & 1023) === 0 && Date.now() > deadline) throw new Zeit() }
 function search(c, depth, alpha, beta, ply) {
-  nodes++;
-  if (c.isCheckmate()) return -100000 + ply;
-  if (c.isDraw()) return 0;
+  tick();
+  const moves = c._moves({ legal: true });
+  if (!moves.length) return c.inCheck() ? -MATE + ply : 0;
   if (depth === 0) return quiesce(c, alpha, beta, 0);
-  for (const m of order(c.moves({ verbose: true }))) {
-    c.move(m);
+  for (const m of order(moves)) {
+    c._makeMove(m);
     const v = -search(c, depth - 1, -beta, -alpha, ply + 1);
-    c.undo();
+    c._undoMove();
     if (v >= beta) return beta;
     if (v > alpha) alpha = v;
   }
   return alpha;
 }
 function quiesce(c, alpha, beta, d) {
-  nodes++;
+  tick();
   const stand = evaluate(c);
   if (stand >= beta) return beta;
   if (stand > alpha) alpha = stand;
-  if (d >= 4) return alpha;
-  for (const m of order(c.moves({ verbose: true }).filter(m => m.captured))) {
-    c.move(m);
+  if (d >= 6) return alpha;
+  for (const m of order(c._moves({ legal: true }).filter(m => m.captured || m.promotion))) {
+    if (!m.promotion && stand + V[m.captured] + 200 < alpha) continue; // hoffnungslose Schlagzüge überspringen
+    c._makeMove(m);
     const v = -quiesce(c, -beta, -alpha, d + 1);
-    c.undo();
+    c._undoMove();
     if (v >= beta) return beta;
     if (v > alpha) alpha = v;
   }
   return alpha;
 }
 
+// Denkzeit in Millisekunden je Stufe. Der Computer rechnet immer tiefer, bis die Zeit um ist,
+// und nimmt dann den besten Zug der letzten fertigen Suche. So muss niemand lange warten.
+const ZEIT = { 1: 300, 2: 500, 3: 1200 };
+const sqName = sq => 'abcdefgh'[sq & 15] + (8 - (sq >> 4));
+
 export function bestMove(fen, level) {
   const c = new Chess(fen);
-  const moves = c.moves({ verbose: true });
-  if (!moves.length) return null;
-  // leicht: oft ein zufälliger Zug, aber Matt in 1 sieht er
-  if (level === 1) {
-    const mate = moves.find(m => m.san.endsWith('#'));
-    if (mate) return mate.san;
-    if (Math.random() < 0.45) return moves[Math.floor(Math.random() * moves.length)].san;
+  const pub = c.moves({ verbose: true });
+  if (!pub.length) return null;
+  const mate = pub.find(m => m.san.endsWith('#'));
+  if (mate) return mate.san;
+  // leicht: oft ein zufälliger Zug
+  if (level === 1 && Math.random() < 0.45) return pub[Math.floor(Math.random() * pub.length)].san;
+  const toSan = m => pub.find(p => p.from === sqName(m.from) && p.to === sqName(m.to) && (p.promotion || '') === (m.promotion || '')).san;
+  const maxDepth = level === 3 ? 5 : level === 2 ? 2 : 1;
+  const noise = level === 1 ? 60 : level === 2 ? 25 : 0;
+  reached = 0; nodes = 0; deadline = Date.now() + ZEIT[level];
+  let list = order(c._moves({ legal: true })), best = [list[0]];
+  for (let depth = 1; depth <= maxDepth; depth++) {
+    const scored = [];
+    let alpha = -Infinity;
+    try {
+      for (const m of list) {
+        c._makeMove(m);
+        // Nullfenster: Züge, die klar schlechter sind, werden nur grob gerechnet
+        const v = -search(c, depth - 1, -Infinity, -(alpha - noise - 1), 1) + (noise ? Math.random() * noise : 0);
+        c._undoMove();
+        scored.push([v, m]);
+        if (v > alpha) alpha = v;
+      }
+    } catch (e) {
+      if (!(e instanceof Zeit)) throw e;
+      // Zeit um mitten in einer Tiefe: Der erste Zug (bisher bester) ist schon fertig gerechnet.
+      // Hat ein anderer Zug ihn übertroffen, nehmen wir den.
+      if (scored.length) best = [scored.reduce((a, b) => b[0] > a[0] ? b : a)[1]];
+      break;
+    }
+    scored.sort((a, b) => b[0] - a[0]);
+    const top = scored[0][0];
+    best = scored.filter(x => x[0] >= top - 0.5).map(x => x[1]);
+    list = scored.map(x => x[1]);
+    reached = depth;
+    if (top > MATE - 100) break; // Matt gefunden
   }
-  const depth = level === 3 ? 3 : level === 2 ? 2 : 1;
-  nodes = 0;
-  let best = [], bestV = -Infinity;
-  for (const m of order(moves)) {
-    c.move(m);
-    let v = -search(c, depth - 1, -Infinity, Infinity, 1);
-    c.undo();
-    if (level < 3) v += Math.random() * (level === 1 ? 60 : 25); // etwas Abwechslung
-    if (v > bestV + 0.5) { bestV = v; best = [m] } else if (Math.abs(v - bestV) <= 0.5) best.push(m);
-  }
-  return best[Math.floor(Math.random() * best.length)].san;
+  return toSan(best[Math.floor(Math.random() * best.length)]);
 }
